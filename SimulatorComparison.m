@@ -1,5 +1,5 @@
 atse = AlongTrackSimulatorEmpirical();
-missionName = atse.missions{5}
+missionName = atse.missions{24}
 
 ats = AlongTrackSimulator();
 T_orbit = ats.orbitalPeriodForMissionWithName(missionName);
