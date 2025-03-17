@@ -1,0 +1,32 @@
+function T_nodal = computeNodalPeriod(a, e, i)
+    % COMPUTE_NODAL_PERIOD Computes the nodal precession period
+    %
+    % Inputs:
+    %   a  - Semi-major axis (km)
+    %   e  - Eccentricity
+    %   i  - Inclination (degrees)
+    %   mu - Gravitational parameter (default: Earth's, 398600.4418 km^3/s^2)
+    %
+    % Output:
+    %   T_nodal - Nodal period (seconds)
+    
+    % Constants
+    mu = 398600.4418; % Earth's gravitational parameter (km^3/s^2)
+    J2 = 1.08263e-3;      % Earth's J2 coefficient
+    RE = 6378.137;        % Earth's equatorial radius (km)
+    
+    % Convert inclination to radians
+    i = deg2rad(i);
+    
+    % Compute Mean Motion
+    n = sqrt(mu / a^3); % Mean motion (rad/s)
+    
+    % Compute Semi-Latus Rectum
+    p = a * (1 - e^2);
+    
+    % Compute Nodal Precession Rate
+    RAAN_dot = - (3/2) * J2 * (RE / p)^2 * n * cos(i); % RAAN precession rate (rad/s)
+    
+    % Compute Nodal Period
+    T_nodal = 2 * pi / abs(RAAN_dot); % in seconds
+end
