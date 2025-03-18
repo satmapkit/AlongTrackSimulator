@@ -19,9 +19,12 @@ function [lat, lon] = computeGroundTrackWithNodalPrecession(semi_major_axis, e, 
     mu = 398600.4418; % Earth's gravitational parameter (km^3/s^2)
     J2 = 1.08263e-3;      % Earth's J2 coefficient
     RE = 6378.137;        % Earth's equatorial radius (km)
+    omega_E = 7.2921159e-5; % Earth's rotation rate (rad/s)
     
     % Convert inclination to radians
     incl = deg2rad(incl);
+    omega = deg2rad(omega);
+    M0 = deg2rad(M0);
     
     % Compute Mean Motion
     n = sqrt(mu / semi_major_axis^3); % Mean motion (rad/s)
@@ -33,21 +36,22 @@ function [lat, lon] = computeGroundTrackWithNodalPrecession(semi_major_axis, e, 
     % Initialize outputs
     lat = zeros(size(t));
     lon = zeros(size(t));
-    
+
+    R1_i = [1, 0, 0; 0, cos(incl), -sin(incl); 0, sin(incl), cos(incl)]; % Rotate by inclination
+    R3_w = [cos(omega), -sin(omega), 0; sin(omega), cos(omega), 0; 0, 0, 1]; % Rotate by argument of perigee
+    R13_iw = R1_i * R3_w;
+
     % Loop through each time step
     for k = 1:length(t)
         % Compute updated RAAN due to nodal precession
         RAAN = RAAN_0 + RAAN_dot * t(k);
         
         % Compute Mean Anomaly at time t
-        M = deg2rad(M0) + n * t(k);
+        M = M0 + n * t(k);
         
-        % Solve Kepler's Equation for Eccentric Anomaly using Newton-Raphson
-        E = M; % Initial guess
-        for j = 1:10 % Iterate to improve accuracy
-            E = E - (E - e * sin(E) - M) / (1 - e * cos(E));
-        end
-        
+        % kepler2 appears to be the fastest
+        E = AlongTrackSimulator.kepler2(M,e);
+
         % Compute True Anomaly
         theta = 2 * atan2(sqrt(1 + e) * sin(E / 2), sqrt(1 - e) * cos(E / 2));
         
@@ -58,14 +62,14 @@ function [lat, lon] = computeGroundTrackWithNodalPrecession(semi_major_axis, e, 
         
         % Rotation Matrices to transform to ECI
         R3_W = [cos(RAAN), -sin(RAAN), 0; sin(RAAN), cos(RAAN), 0; 0, 0, 1]; % Rotate by RAAN
-        R1_i = [1, 0, 0; 0, cos(incl), -sin(incl); 0, sin(incl), cos(incl)]; % Rotate by inclination
-        R3_w = [cos(deg2rad(omega)), -sin(deg2rad(omega)), 0; sin(deg2rad(omega)), cos(deg2rad(omega)), 0; 0, 0, 1]; % Rotate by argument of perigee
+        % R1_i = [1, 0, 0; 0, cos(incl), -sin(incl); 0, sin(incl), cos(incl)]; % Rotate by inclination
+        % R3_w = [cos(omega), -sin(omega), 0; sin(omega), cos(omega), 0; 0, 0, 1]; % Rotate by argument of perigee
         
         % Compute ECI coordinates
-        r_eci = R3_W * R1_i * R3_w * [x_orb; y_orb; 0];
+        % r_eci = R3_W * R1_i * R3_w * [x_orb; y_orb; 0];
+        r_eci = R3_W * R13_iw * [x_orb; y_orb; 0];
         
         % Convert to ECEF (Earth rotates at ω_E)
-        omega_E = 7.2921159e-5; % Earth's rotation rate (rad/s)
         theta_GMST = omega_E * t(k); % Earth's rotation angle
         
         R3_E = [cos(theta_GMST), sin(theta_GMST), 0; -sin(theta_GMST), cos(theta_GMST), 0; 0, 0, 1]; % Earth rotation matrix

@@ -224,6 +224,80 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         [lat, lon] = computeGroundTrack(altitude, e, incl, RAAN, argPerigee, M0, t)
         [lat, lon] = computeGroundTrackWithNodalPrecession(semi_major_axis, e, incl, RAAN, omega, M0, t)
         T_nodal = computeNodalPeriod(a, e, i)
+
+        function E = kepler1(M,e)
+            % Solve Kepler's Equation for Eccentric Anomaly using Newton-Raphson
+            E = M; % Initial guess
+            for j = 1:10 % Iterate to improve accuracy
+                E = E - (E - e * sin(E) - M) / (1 - e * cos(E));
+            end
+        end
+
+        function E = kepler2(M,e)
+            % Solve Kepler's Equation: M = E - e*sin(E)
+            % Using Newton-Raphson method for iterative solution
+            E = M;            % Initial guess
+            tol = 1e-8;       % Convergence tolerance
+            maxIter = 100;    % Maximum iterations
+            for iter = 1:maxIter
+                f = E - e*sin(E) - M;
+                fprime = 1 - e*cos(E);
+                deltaE = -f / fprime;
+                E = E + deltaE;
+                if abs(deltaE) < tol
+                    break;
+                end
+            end
+        end
+
+        function E = kepler3(M,e)
+            % Define Kepler's Equation as a function to minimize
+            kepler_eq = @(E) abs(E - e * sin(E) - M); % Absolute error in Kepler's equation
+
+            % Use fminsearch to find E that minimizes the function
+            % optimset('TolFun', 1e-10, 'TolX', 1e-10,'MaxIter',10)
+            E = fminsearch(kepler_eq, M,optimset('TolFun', 1e-10, 'TolX', 1e-10));
+        end
+
+        function E = kepler4(M,e)
+            E = M; % Initial guess
+            tol = 1e-8;
+            max_iter = 10;
+
+            for j = 1:max_iter
+                f = E - e * sin(E) - M;
+                fp = 1 - e * cos(E);
+                fpp = e * sin(E);
+
+                dE = -f / (fp - 0.5 * f * fpp / fp); % Householder's update
+                E = E + dE;
+
+                if abs(dE) < tol
+                    break;
+                end
+            end
+
+        end
+
+
+        function E = kepler5(M,e)
+            % Hybrid Newton-Raphson & Halley's Method
+            if e < 0.8
+                E = M + e * sin(M); % Good initial guess for low e
+            else
+                E = pi; % Better guess for high e
+            end
+
+            for j = 1:4  % Converges even faster than Newton
+                f_E = E - e * sin(E) - M;
+                f_E_deriv = 1 - e * cos(E);
+                f_E_2nd_deriv = e * sin(E);
+
+                % Halley's method update
+                E = E - (2 * f_E * f_E_deriv) / (2 * f_E_deriv^2 - f_E * f_E_2nd_deriv);
+            end
+        end
+
     end
 
 end
