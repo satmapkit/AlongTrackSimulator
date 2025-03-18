@@ -1,14 +1,10 @@
 ats = AlongTrackSimulator();
-missionName = "s6a";
 
-% profile on
-tic
-alongtrack = ats.projectedPointsForRepeatMissionWithName(missionName,Lx=2000e3,Ly=2000e3,lat0=30,lon0=1);
-toc
-% profile viewer
-
-% figure
-% scatter(alongtrack.x, alongtrack.y,1.5^2,"red","filled")
+figure
+alongtrack = ats.projectedPointsForRepeatMissionWithName("s6a",Lx=2000e3,Ly=2000e3,lat0=30,lon0=1);
+scatter(alongtrack.x, alongtrack.y,1.5^2,"blue","filled"), hold on
+alongtrack = ats.projectedPointsForRepeatMissionWithName("j3n",Lx=2000e3,Ly=2000e3,lat0=30,lon0=1);
+scatter(alongtrack.x, alongtrack.y,1.5^2,"red","filled")
 %%
 % figure
 % scatter(x, y,1.5^2,"red","filled")
