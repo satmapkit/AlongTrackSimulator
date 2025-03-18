@@ -1,9 +1,9 @@
-function [lat, lon] = computeGroundTrack(semi_major_axis, e, incl, RAAN, argPerigee, M0, t)
+function [lat, lon] = computeGroundTrack(semi_major_axis, e, incl, RAAN_0, argPerigee, M0, t)
 arguments
     semi_major_axis 
     e 
     incl 
-    RAAN 
+    RAAN_0 
     argPerigee 
     M0 
     t 
@@ -14,7 +14,7 @@ end
 % Inputs:
 %   a         - Semi-major axis [km]
 %   e         - Eccentricity (0 for circular, >0 for elliptical)
-%   incl      - Inclination [rad]
+%   incl      - Inclination [degrees]
 %   RAAN      - Right Ascension of Ascending Node [rad]
 %   argPerigee- Argument of perigee [rad]
 %   M0        - Initial mean anomaly at t = 0 [rad]
@@ -29,8 +29,16 @@ end
 
 % Define constants
 mu = 398600.4418;         % Earth's gravitational parameter [km^3/s^2]
-Re = 6378;                % Earth's radius [km]
+Re = 6378.137;                % Earth's radius [km]
 omega_e = 7.2921159e-5;   % Earth's rotation rate [rad/s]
+
+% Convert inclination to radians
+incl = deg2rad(incl);
+
+J2 = 1.08263e-3;      % Earth's J2 coefficient
+p = semi_major_axis * (1 - e^2); % Semi-latus rectum
+n = sqrt(mu / semi_major_axis^3); % Mean motion (rad/s)
+RAAN_dot = - (3/2) * J2 * (Re / p)^2 * n * cos(incl); % RAAN precession rate (rad/s)
 
 N = length(t);
 lat = zeros(1, N);
@@ -39,8 +47,10 @@ lon = zeros(1, N);
 a = semi_major_axis;
 for i = 1:N
     % Compute mean anomaly at time t(i)
-    M = M0 + sqrt(mu / a^3) * t(i);
+    M = M0 + n * t(i);
     
+    RAAN = RAAN_0 + 0*RAAN_dot*t(i);
+
     % Solve Kepler's Equation: M = E - e*sin(E)
     % Using Newton-Raphson method for iterative solution
     E = M;            % Initial guess

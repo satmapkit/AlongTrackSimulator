@@ -3,7 +3,7 @@ classdef AlongTrackSimulatorBase
     %   Detailed explanation goes here
     methods (Abstract)
         missions = missions;
-        [lat,lon,time] = pathForMissionWithName;
+        [lat,lon,time] = groundTrackForMissionWithName;
     end
 
     methods
@@ -18,7 +18,7 @@ classdef AlongTrackSimulatorBase
             end
             optionsArgs = namedargs2cell(options);
             [x0, y0, minLat, minLon, maxLat, maxLon] = AlongTrackSimulatorBase.LatitudeLongitudeBoundsForTransverseMercatorBox(optionsArgs{:});
-            [lat,lon,time] = self.pathForMissionWithName("s6a");
+            [lat,lon,time] = self.groundTrackForMissionWithName("s6a");
             withinBox = lat >= minLat & lat <= maxLat & lon >= minLon & lon <= maxLon;
             lat(~withinBox) = [];
             lon(~withinBox) = [];

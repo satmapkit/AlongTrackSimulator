@@ -14,7 +14,7 @@ MAX_ITER = 10;
 while (i < MAX_ITER)
     s = sin(phi);
     t = 1 - es * s .* s;
-    t = (MeridionalArcPROJ4(phi) - y) .* (t .* sqrt(t)) * k / WGS84a;
+    t = (AlongTrackSimulatorBase.MeridionalArcPROJ4(phi) - y) .* (t .* sqrt(t)) * k / WGS84a;
     phi = phi - t;
     if max(abs(t)) < 1e-11
         break;

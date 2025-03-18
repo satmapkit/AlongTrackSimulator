@@ -5,7 +5,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
 
     methods
 
-        function [lat,lon,time] = pathForMissionWithName(self,mission,options)
+        function [lat,lon,time] = groundTrackForMissionWithName(self,mission,options)
             arguments
                 self AlongTrackSimulator
                 mission {mustBeText}
@@ -14,7 +14,10 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             end
             missionParametersDict = AlongTrackSimulator.missionParameters;
             p = missionParametersDict(mission);
-            
+            p.semi_major_axis = self.semimajorAxisForExactRepeatForMission(mission);
+            % p.eccentricity = self.eccentricityForExactRepeatForMission(mission);
+            % p.inclination = self.inclinationForExactRepeatForMission(mission);
+
             mu = 398600.4418;         % Earth's gravitational parameter [km^3/s^2]
             T_orbit = 2*pi*sqrt((p.semi_major_axis)^3/mu);  % Orbital period [s]
             if isfield(options,"time")
@@ -31,14 +34,106 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             RAAN = deg2rad(p.longitude_at_equator);    % Right Ascension of Ascending Node [rad], or longitude of the ascending node
             argPeriapsis = 0;         % Argument of periapsis [rad].
             M0 = 0;                   % Initial mean anomaly [rad]
-                        % [lat, lon] = AlongTrackSimulator.computeGroundTrack(p.semi_major_axis, p.eccentricity, deg2rad(p.inclination), RAAN, argPeriapsis, M0, time_shifted);
+            % [lat, lon] = AlongTrackSimulator.computeGroundTrack(p.semi_major_axis, p.eccentricity, p.inclination, RAAN, argPeriapsis, M0, time_shifted);
             [lat, lon] = AlongTrackSimulator.computeGroundTrackWithNodalPrecession(p.semi_major_axis, p.eccentricity, p.inclination, RAAN, argPeriapsis, M0, time_shifted);
+        end
+
+        function inclination = inclinationForExactRepeatForMission(self,mission)
+            mu = 398600.4418; % Earth's gravitational parameter (km^3/s^2)
+            J2 = 1.08262668e-3;      % Earth's J2 coefficient
+            RE = 6378.1363;        % Earth's equatorial radius (km)
+
+            missionParametersDict = self.missionParameters;
+            p = missionParametersDict(mission);
+
+            a = p.semi_major_axis; e = p.eccentricity; i = p.inclination;
+            N_orbits = p.passes_per_cycle/2;
+            T_orbit = 2*pi*sqrt(a^3 / mu);
+            p = a * (1 - e^2);
+            gamma = (3/2) * J2 * (RE / p)^2;
+            T_sidereal = 86164;
+
+            M = round(N_orbits * (T_orbit/T_sidereal + gamma*cosd(i)));
+            inclination = acosd((M/N_orbits - T_orbit/T_sidereal)/gamma);
+        end
+
+        function a = semimajorAxisForExactRepeatForMission(self,mission)
+            mu = 398600.4418; % Earth's gravitational parameter (km^3/s^2)
+            J2 = 1.08262668e-3;      % Earth's J2 coefficient
+            RE = 6378.1363;        % Earth's equatorial radius (km)
+
+            missionParametersDict = self.missionParameters;
+            p = missionParametersDict(mission);
+
+            a = p.semi_major_axis, e = p.eccentricity; i = p.inclination;
+            N_orbits = p.passes_per_cycle/2;
+            T_orbit = 2*pi*sqrt(a^3 / mu);
+            p = a * (1 - e^2);
+            gamma = (3/2) * J2 * (RE / p)^2;
+            T_sidereal = 86164;
+            M = round(N_orbits * (T_orbit/T_sidereal + gamma*cosd(i)));
+
+            f = @(a) abs(((2*pi/T_sidereal) * sqrt(a^3/mu) + (3/2) * cosd(i) * J2 * (RE / (a * (1 - e^2)))^2)*N_orbits - M);
+
+            a = fminsearch(f,a);            
+        end
+
+        function J2 = j2ForExactRepeatForMission(self,mission)
+            mu = 398600.4418; % Earth's gravitational parameter (km^3/s^2)
+            J2 = 1.08262668e-3;      % Earth's J2 coefficient
+            RE = 6378.1363;        % Earth's equatorial radius (km)
+
+            missionParametersDict = self.missionParameters;
+            p = missionParametersDict(mission);
+
+            a = p.semi_major_axis; e = p.eccentricity; i = p.inclination;
+            N_orbits = p.passes_per_cycle/2;
+            T_orbit = 2*pi*sqrt(a^3 / mu);
+            p = a * (1 - e^2);
+            gamma = (3/2) * J2 * (RE / p)^2;
+            T_sidereal = 86164;
+            M = round(N_orbits * (T_orbit/T_sidereal + gamma*cosd(i)));
+
+            f = @(J2) abs(((2*pi/T_sidereal) * sqrt(a^3/mu) + (3/2) * cosd(i) * (J2*1e-4) * (RE / (a * (1 - e^2)))^2)*N_orbits - M);
+
+            J2 = fminsearch(f,J2*1e4)/1e4;
+        end
+
+        function e = eccentricityForExactRepeatForMission(self,mission)
+            mu = 398600.4418; % Earth's gravitational parameter (km^3/s^2)
+            J2 = 1.08262668e-3;      % Earth's J2 coefficient
+            RE = 6378.1363;        % Earth's equatorial radius (km)
+
+            missionParametersDict = self.missionParameters;
+            p = missionParametersDict(mission);
+
+            a = p.semi_major_axis; e = p.eccentricity, i = p.inclination;
+            N_orbits = p.passes_per_cycle/2;
+            T_orbit = 2*pi*sqrt(a^3 / mu);
+            p = a * (1 - e^2);
+            gamma = (3/2) * J2 * (RE / p)^2;
+            T_sidereal = 86164;
+            M = round(N_orbits * (T_orbit/T_sidereal + gamma*cosd(i)));
+
+            f = @(e) abs(((2*pi/T_sidereal) * sqrt(a^3/mu) + (3/2) * cosd(i) * J2 * (RE / (a * (1 - (1e-5*e)^2)))^2)*N_orbits - M);
+
+            e = fminsearch(f,e*1e5)/1e5;            
+        end
+
+        function [lat,lon,time] = repeatGroundTrackForMissionWithName(self,mission)
+           missionParametersDict = self.missionParameters;
+            p = missionParametersDict(mission);
+            N_orbits = p.passes_per_cycle/2;
+            if isinf(N_orbits)
+                error("The mission " + mission + " does not have a repeat cycle.")
+            end
+            [lat,lon,time] = self.groundTrackForMissionWithName(mission,N_orbits=N_orbits);
         end
 
         function T = orbitalPeriodForMissionWithName(self,mission)
             missionParametersDict = self.missionParameters;
             p = missionParametersDict(mission);
-            
+            p.semi_major_axis = self.semimajorAxisForExactRepeatForMission(mission);
             mu = 398600.4418;         % Earth's gravitational parameter [km^3/s^2]
             T = 2*pi*sqrt((p.semi_major_axis)^3/mu);  % Orbital period [s]
         end
@@ -60,7 +155,40 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             missionData = AlongTrackSimulator.missionParameters();
             missions = missionData.keys;
         end
-        
+
+        function alongtrack = projectedPointsForRepeatMissionWithName(self,missionName,options)
+            arguments
+                self AlongTrackSimulator
+                missionName string
+                options.Lx
+                options.Ly
+                options.lat0
+                options.lon0
+            end
+            optionsArgs = namedargs2cell(options);
+            [x0, y0, minLat, minLon, maxLat, maxLon] = self.LatitudeLongitudeBoundsForTransverseMercatorBox(optionsArgs{:});
+            [lat,lon,time] = self.repeatGroundTrackForMissionWithName(missionName);
+
+            % 1) apply crude filter
+            withinBox = lat >= minLat & lat <= maxLat & lon >= minLon & lon <= maxLon;
+            lat(~withinBox) = [];
+            lon(~withinBox) = [];
+            time(~withinBox) = [];
+
+            % 2) project points
+            use options;
+            [x,y] = AlongTrackSimulatorBase.LatitudeLongitudeToTransverseMercator(lat,lon,lon0=lon0);
+
+            % 3) apply more precise filter
+            out_of_bounds = (x < x0 - Lx/2) | (x > x0 + Lx/2) | (y < y0 - Ly/2) | (y > y0 + Ly/2);
+            alongtrack.x = x(~out_of_bounds);
+            alongtrack.y = y(~out_of_bounds)-y0;
+            alongtrack.time = time(~out_of_bounds);
+
+            [alongtrack.time,I] = sort(alongtrack.time);
+            alongtrack.x = alongtrack.x(I);
+            alongtrack.y = alongtrack.y(I);
+        end
 
         
 

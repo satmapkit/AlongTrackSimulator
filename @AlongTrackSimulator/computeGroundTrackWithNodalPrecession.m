@@ -1,4 +1,4 @@
-function [lat, lon] = computeGroundTrackWithNodalPrecession(semi_major_axis, e, incl, RAAN, omega, M0, t)
+function [lat, lon] = computeGroundTrackWithNodalPrecession(semi_major_axis, e, incl, RAAN_0, omega, M0, t)
     % COMPUTE_GROUND_TRACK Computes the satellite ground track including nodal precession
     % 
     % Inputs:
@@ -37,7 +37,7 @@ function [lat, lon] = computeGroundTrackWithNodalPrecession(semi_major_axis, e, 
     % Loop through each time step
     for k = 1:length(t)
         % Compute updated RAAN due to nodal precession
-        RAAN = deg2rad(RAAN) + RAAN_dot * t(k);
+        RAAN = RAAN_0 + RAAN_dot * t(k);
         
         % Compute Mean Anomaly at time t
         M = deg2rad(M0) + n * t(k);

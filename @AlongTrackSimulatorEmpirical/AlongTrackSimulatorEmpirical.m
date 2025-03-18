@@ -14,7 +14,7 @@ classdef AlongTrackSimulatorEmpirical < AlongTrackSimulatorBase
             self.path = options.path;
         end
 
-        function [lat,lon,time] = pathForMissionWithName(self,mission)
+        function [lat,lon,time] = groundTrackForMissionWithName(self,mission)
             arguments
                 self AlongTrackSimulatorEmpirical
                 mission {mustBeText}
