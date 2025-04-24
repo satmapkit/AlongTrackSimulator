@@ -163,6 +163,25 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             alongtrack.repeatCycle = self.repeatCycleForMissionWithName(missionName);
         end
 
+        function [outputGroup, observingSystem] = wvmObservingSystemForRepeatMissionWithName(self,wvt, missionName)
+            ats = AlongTrackSimulator();
+            alongtrack = ats.projectedPointsForRepeatMissionWithName(missionName,Lx=wvt.Lx,Ly=wvt.Ly,lat0=wvt.latitude,lon0=0);
+
+            trackIndices = find(diff(alongtrack.t)>1);
+            trackIndices(end+1) = length(alongtrack.t);
+            startIndex = 1;
+            tracks = cell(length(trackIndices),1);
+            for i=1:length(trackIndices)
+                endIndex = trackIndices(i);
+                tracks{i}.x = alongtrack.x(startIndex:endIndex);
+                tracks{i}.y = alongtrack.y(startIndex:endIndex);
+                tracks{i}.t = alongtrack.t(startIndex:endIndex);
+                startIndex = endIndex+1;
+            end
+
+            
+        end
+
         % function alongtrack = projectedPointsForReferenceOrbit(self,options)
         %     arguments
         %         self AlongTrackSimulatorEmpirical
