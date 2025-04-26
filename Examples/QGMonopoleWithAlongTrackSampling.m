@@ -32,8 +32,11 @@ wvt.addForcing(WVBetaPlanePVAdvection(wvt));
 model = WVModel(wvt);
 
 outputFile = model.createNetCDFFileForModelOutput('QGMonopoleWithAlongTrack.nc',outputInterval=86400,shouldOverwriteExisting=1);
-outputFile.addOutputGroup(AlongTrackSimulator.wvmOutputGroupForRepeatMissionWithName(model,"s6a"));
-outputFile.addOutputGroup(AlongTrackSimulator.wvmOutputGroupForRepeatMissionWithName(model,"j3n"));
+ats = AlongTrackSimulator();
+outputFile.addOutputGroup(WVModelOutputGroupAlongTrack(model,"s6a",ats));
+outputFile.addOutputGroup(WVModelOutputGroupAlongTrack(model,"j3n",ats));
+outputFile.addOutputGroup(WVModelOutputGroupAlongTrack(model,"alg",ats));
+
 
 %%
 model.integrateToTime(75*86400);
@@ -44,4 +47,7 @@ ncfile = model.ncfile;
 figure, scatter3(obs.x/1e3,obs.y/1e3,obs.ssh*1e2,[],obs.ssh*1e2,'filled'), colorbar('eastoutside')
 
 [obs.x,obs.y,obs.t,obs.ssh] = ncfile.readVariables("j3n/track_x","j3n/track_y","j3n/t","j3n/ssh");
+figure, scatter3(obs.x/1e3,obs.y/1e3,obs.ssh*1e2,[],obs.ssh*1e2,'filled'), colorbar('eastoutside')
+
+[obs.x,obs.y,obs.t,obs.ssh] = ncfile.readVariables("alg/track_x","alg/track_y","alg/t","alg/ssh");
 figure, scatter3(obs.x/1e3,obs.y/1e3,obs.ssh*1e2,[],obs.ssh*1e2,'filled'), colorbar('eastoutside')

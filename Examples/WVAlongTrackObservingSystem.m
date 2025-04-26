@@ -1,17 +1,12 @@
 classdef WVAlongTrackObservingSystem < WVObservingSystem
     %UNTITLED2 Summary of this class goes here
     %   Detailed explanation goes here
-
-    properties (GetAccess=public, SetAccess=protected)
-        missionName
-        tracks
-        repeatCycle
-
-        firstPassoverTime
+    properties (WeakHandle)
+        alongTrackGroup WVModelOutputGroupAlongTrack
     end
 
     methods
-        function self = WVAlongTrackObservingSystem(model,missionName,tracks,repeatCycle)
+        function self = WVAlongTrackObservingSystem(model,alongTrackGroup)
             %create a new observing system
             %
             % This class is intended to be subclassed, so it generally
@@ -24,21 +19,10 @@ classdef WVAlongTrackObservingSystem < WVObservingSystem
             % - Returns self: a new instance of WVObservingSystem
             arguments
                 model WVModel
-                missionName {mustBeText}
-                tracks
-                repeatCycle
+                alongTrackGroup
             end
-            self@WVObservingSystem(model,missionName);
-            self.missionName = missionName;
-            self.tracks = tracks;
-            self.repeatCycle = repeatCycle;
-
-            % We treat the entire passover as one instant in time, and thus
-            % only stop the model at the first t in the passover.
-            self.firstPassoverTime = zeros(length(self.tracks),1);
-            for iPassover = 1:length(self.tracks)
-                self.firstPassoverTime(iPassover) = self.tracks{iPassover}.t(1);
-            end
+            self@WVObservingSystem(model,alongTrackGroup.missionName);
+            self.alongTrackGroup = alongTrackGroup;
         end
 
 
@@ -65,11 +49,15 @@ classdef WVAlongTrackObservingSystem < WVObservingSystem
         end
 
         function writeTimeStepToFile(self,group,outputIndices)
-            iPassover = find( abs(self.firstPassoverTime - mod(self.wvt.t,self.repeatCycle)) < 1, 1, 'first');
-
-            group.variableWithName("track_x").setValueAlongDimensionAtIndex(self.tracks{iPassover}.x,'t',outputIndices);
-            group.variableWithName("track_y").setValueAlongDimensionAtIndex(self.tracks{iPassover}.y,'t',outputIndices);
-            ssh = reshape(self.model.wvt.variableAtPositionWithName(self.tracks{iPassover}.x,self.tracks{iPassover}.y,[],'ssh'),[],1);
+            if ~isinf(self.alongTrackGroup.repeatCycle)
+                iPassover = find( abs(self.alongTrackGroup.firstPassoverTime - mod(self.wvt.t,self.alongTrackGroup.repeatCycle)) < 1, 1, 'first');
+            else
+                iPassover = find( abs(self.alongTrackGroup.firstPassoverTime - self.wvt.t) < 1, 1, 'first');
+            end
+            tracks = self.alongTrackGroup.tracks;
+            group.variableWithName("track_x").setValueAlongDimensionAtIndex(tracks{iPassover}.x,'t',outputIndices);
+            group.variableWithName("track_y").setValueAlongDimensionAtIndex(tracks{iPassover}.y,'t',outputIndices);
+            ssh = reshape(self.model.wvt.variableAtPositionWithName(tracks{iPassover}.x,tracks{iPassover}.y,[],'ssh'),[],1);
             group.variableWithName("ssh").setValueAlongDimensionAtIndex(ssh,'t',outputIndices);
         end
 
