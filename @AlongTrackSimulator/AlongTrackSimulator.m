@@ -51,7 +51,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             % RAAN = pi/2;              % Right Ascension of Ascending Node [rad], or longitude of the ascending node
             % argPerigee = -pi/2;       % Argument of perigee [rad]. -pi/2 starts the orbit on the ascending track
             % M0 = pi/2;                   % Initial mean anomaly [rad]
-            RAAN = deg2rad(p.longitude_at_equator);    % Right Ascension of Ascending Node [rad], or longitude of the ascending node
+            RAAN = p.longitude_at_equator;    % Right Ascension of Ascending Node [rad], or longitude of the ascending node
             argPeriapsis = 0;         % Argument of periapsis [rad].
             M0 = 0;                   % Initial mean anomaly [rad]
             % [lat, lon] = AlongTrackSimulator.computeGroundTrack(p.semi_major_axis, p.eccentricity, p.inclination, RAAN, argPeriapsis, M0, time_shifted);
@@ -115,6 +115,55 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             disp(T);
         end
 
+        function alongtrack = projectedPointsForMissionWithName(self,missionName,requiredOptions,options)
+            % Returns a structure (x,y,time) of all passes within the
+            % specified window. The structure also contains repeatTime,
+            % for which the mission repeats.
+            %
+            % This function only works for missions with repeat orbits. For
+            % a mission that is not on a repeat orbit, you need to use...
+            arguments
+                self AlongTrackSimulator
+                missionName string
+                requiredOptions.Lx
+                requiredOptions.Ly
+                requiredOptions.lat0
+                requiredOptions.lon0
+                options.time
+                options.origin {mustBeMember(options.origin,{'lower-left','center'})} = 'lower-left'
+            end
+            optionsArgs = namedargs2cell(requiredOptions);
+            [x0, y0, minLat, minLon, maxLat, maxLon] = self.LatitudeLongitudeBoundsForTransverseMercatorBox(optionsArgs{:});
+            [lat,lon,time] = self.groundTrackForMissionWithName(missionName,time=options.time);
+
+            % 1) apply crude filter
+            withinBox = lat >= minLat & lat <= maxLat & lon >= minLon & lon <= maxLon;
+            lat(~withinBox) = [];
+            lon(~withinBox) = [];
+            time(~withinBox) = [];
+
+            % 2) project points
+            use requiredOptions;
+            [x,y] = AlongTrackSimulatorBase.LatitudeLongitudeToTransverseMercator(lat,lon,lon0=lon0);
+
+            % 3) apply more precise filter
+            out_of_bounds = (x < x0 - Lx/2) | (x > x0 + Lx/2) | (y < y0 - Ly/2) | (y > y0 + Ly/2);
+            alongtrack.x = x(~out_of_bounds);
+            alongtrack.y = y(~out_of_bounds)-y0;
+            alongtrack.t = reshape(time(~out_of_bounds),[],1);
+
+            [alongtrack.t,I] = sort(alongtrack.t);
+
+            if options.origin == "lower-left"
+                alongtrack.x = alongtrack.x(I) + Lx/2;
+                alongtrack.y = alongtrack.y(I) + Ly/2;
+            else
+                alongtrack.x = alongtrack.x(I);
+                alongtrack.y = alongtrack.y(I);
+            end
+        end
+
+        
         function alongtrack = projectedPointsForRepeatMissionWithName(self,missionName,requiredOptions,options)
             % Returns a structure (x,y,time) of all passes within the
             % specified window. The structure also contains repeatTime,
@@ -163,7 +212,6 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             alongtrack.repeatCycle = self.repeatCycleForMissionWithName(missionName);
         end
 
-
         % function alongtrack = projectedPointsForReferenceOrbit(self,options)
         %     arguments
         %         self AlongTrackSimulatorEmpirical
@@ -195,6 +243,8 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         missionData = missionParametersCatalog();
         [lat, lon] = computeGroundTrack(altitude, e, incl, RAAN, argPerigee, M0, t)
         [lat, lon] = computeGroundTrackWithNodalPrecession(semi_major_axis, e, incl, RAAN, omega, M0, t)
+        [lat, lon] = computeGroundTrackWithNodalPrecessionSimple(semi_major_axis, e, incl, RAAN, omega, M0, t)
+        [lat, lon] = computeGroundTrackWithNodalPrecessionVectorized(semi_major_axis, e, incl, RAAN, omega, M0, t)
         T_nodal = computeNodalPeriod(a, e, i)
 
 
@@ -347,6 +397,39 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
                 end
             end
         end
+
+        function E = kepler2vec(M, e)
+            %KEPLER2  Vectorized solution of Kepler's equation: M = E - e*sin(E)
+            %   E = kepler2(M, e) solves for the eccentric anomaly E given mean anomaly M
+            %   and eccentricity e.  M and e may be arrays of the same size.
+
+            % Convergence parameters
+            tol = 1e-8;       % tolerance on deltaE
+            maxIter = 100;    % maximum number of Newton-Raphson iterations
+
+            % Initial guess (good for e < 1)
+            E = M;
+            % Track which elements have converged
+            converged = false(size(M));
+
+            for iter = 1:maxIter
+                % Compute residuals and derivative
+                f = E - e .* sin(E) - M;
+                fprime = 1 - e .* cos(E);
+                % Compute update
+                deltaE = -f ./ fprime;
+                % Update only unconverged elements
+                E(~converged) = E(~converged) + deltaE(~converged);
+                % Check convergence for each element
+                newlyConverged = abs(deltaE) < tol;
+                converged = converged | newlyConverged;
+                % If all have converged, exit early
+                if all(converged, 'all')
+                    break;
+                end
+            end
+        end
+
 
         function E = kepler3(M,e)
             % Define Kepler's Equation as a function to minimize
