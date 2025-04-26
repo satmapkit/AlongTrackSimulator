@@ -31,5 +31,17 @@ wvt.addForcing(WVAdaptiveDamping(wvt));
 wvt.addForcing(WVBetaPlanePVAdvection(wvt));
 model = WVModel(wvt);
 
-model.createNetCDFFileForModelOutput('QGMonopoleWithAlongTrack.nc',outputInterval=86400,shouldOverwriteExisting=1);
+outputFile = model.createNetCDFFileForModelOutput('QGMonopoleWithAlongTrack.nc',outputInterval=86400,shouldOverwriteExisting=1);
+outputFile.addOutputGroup(AlongTrackSimulator.wvmOutputGroupForRepeatMissionWithName(model,"s6a"));
+outputFile.addOutputGroup(AlongTrackSimulator.wvmOutputGroupForRepeatMissionWithName(model,"j3n"));
+
+%%
 model.integrateToTime(75*86400);
+ncfile = model.ncfile;
+
+%%
+[obs.x,obs.y,obs.t,obs.ssh] = ncfile.readVariables("s6a/track_x","s6a/track_y","s6a/t","s6a/ssh");
+figure, scatter3(obs.x/1e3,obs.y/1e3,obs.ssh*1e2,[],obs.ssh*1e2,'filled'), colorbar('eastoutside')
+
+[obs.x,obs.y,obs.t,obs.ssh] = ncfile.readVariables("j3n/track_x","j3n/track_y","j3n/t","j3n/ssh");
+figure, scatter3(obs.x/1e3,obs.y/1e3,obs.ssh*1e2,[],obs.ssh*1e2,'filled'), colorbar('eastoutside')

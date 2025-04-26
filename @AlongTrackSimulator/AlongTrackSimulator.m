@@ -163,24 +163,6 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             alongtrack.repeatCycle = self.repeatCycleForMissionWithName(missionName);
         end
 
-        function [outputGroup, observingSystem] = wvmObservingSystemForRepeatMissionWithName(self,wvt, missionName)
-            ats = AlongTrackSimulator();
-            alongtrack = ats.projectedPointsForRepeatMissionWithName(missionName,Lx=wvt.Lx,Ly=wvt.Ly,lat0=wvt.latitude,lon0=0);
-
-            trackIndices = find(diff(alongtrack.t)>1);
-            trackIndices(end+1) = length(alongtrack.t);
-            startIndex = 1;
-            tracks = cell(length(trackIndices),1);
-            for i=1:length(trackIndices)
-                endIndex = trackIndices(i);
-                tracks{i}.x = alongtrack.x(startIndex:endIndex);
-                tracks{i}.y = alongtrack.y(startIndex:endIndex);
-                tracks{i}.t = alongtrack.t(startIndex:endIndex);
-                startIndex = endIndex+1;
-            end
-
-            
-        end
 
         % function alongtrack = projectedPointsForReferenceOrbit(self,options)
         %     arguments
@@ -214,6 +196,36 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         [lat, lon] = computeGroundTrack(altitude, e, incl, RAAN, argPerigee, M0, t)
         [lat, lon] = computeGroundTrackWithNodalPrecession(semi_major_axis, e, incl, RAAN, omega, M0, t)
         T_nodal = computeNodalPeriod(a, e, i)
+
+
+        function outputGroup = wvmOutputGroupForRepeatMissionWithName(model, missionName)
+            ats = AlongTrackSimulator();
+            wvt = model.wvt;
+            alongtrack = ats.projectedPointsForRepeatMissionWithName(missionName,Lx=wvt.Lx,Ly=wvt.Ly,lat0=wvt.latitude,lon0=0);
+
+            trackIndices = find(diff(alongtrack.t)>1);
+            trackIndices(end+1) = length(alongtrack.t);
+            startIndex = 1;
+            tracks = cell(length(trackIndices),1);
+            for i=1:length(trackIndices)
+                endIndex = trackIndices(i);
+                tracks{i}.x = alongtrack.x(startIndex:endIndex);
+                tracks{i}.y = alongtrack.y(startIndex:endIndex);
+                tracks{i}.t = alongtrack.t(startIndex:endIndex);
+                startIndex = endIndex+1;
+            end
+            % figure
+            % for iPassover=1:length(tracks)
+            %     scatter(tracks{iPassover}.x/1e3,tracks{iPassover}.y/1e3), hold on
+            % end
+            repeatCycle = ats.repeatCycleForMissionWithName(missionName);
+            outputGroup = WVModelOutputGroupAlongTrackRepeatCycle(model,missionName,tracks,repeatCycle);
+        end
+
+        % function addObservingSystemToModelForRepeatMissionWithName(model, missionName)
+        %     outputGroup = self.wvmOutputGroupForRepeatMissionWithName(model, missionName);
+        % 
+        % end
 
         function tracks = convertAlongTrackStructureToPass(alongtrack)
             trackIndices = find(diff(alongtrack.t)>1);
