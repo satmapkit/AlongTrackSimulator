@@ -7,8 +7,8 @@
 Lx = 2000e3;
 Ly = 1000e3;
 
-Nx = 256;
-Ny = 128;
+Nx = 2*256;
+Ny = 2*128;
 
 latitude = 25;
 
@@ -31,15 +31,16 @@ wvt.addForcing(WVAdaptiveDamping(wvt));
 wvt.addForcing(WVBetaPlanePVAdvection(wvt));
 model = WVModel(wvt);
 
-outputFile = model.createNetCDFFileForModelOutput('QGMonopoleWithAlongTrack.nc',outputInterval=86400,shouldOverwriteExisting=1);
+outputFile = model.createNetCDFFileForModelOutput('QGMonopoleWithAlongTrack.nc',outputInterval=86400/4,shouldOverwriteExisting=1);
 ats = AlongTrackSimulator();
-outputFile.addOutputGroup(WVModelOutputGroupAlongTrack(model,"s6a",ats));
-outputFile.addOutputGroup(WVModelOutputGroupAlongTrack(model,"j3n",ats));
-outputFile.addOutputGroup(WVModelOutputGroupAlongTrack(model,"alg",ats));
+currentMissions = ats.currentMissions;
+for iMission = 1:length(currentMissions)
+    outputFile.addOutputGroup(WVModelOutputGroupAlongTrack(model,currentMissions(iMission),ats));
+end
 
 
 %%
-model.integrateToTime(75*86400);
+model.integrateToTime(365*86400);
 ncfile = model.ncfile;
 
 %%

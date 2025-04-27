@@ -1,2 +1,5 @@
 *.asv
 .DS_Store
+*.png
+*.nc
+*.mp4
