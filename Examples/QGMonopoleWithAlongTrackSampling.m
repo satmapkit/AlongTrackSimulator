@@ -10,7 +10,7 @@ Ly = 1000e3;
 Nx = 2*256;
 Ny = 2*128;
 
-latitude = 25;
+latitude = 24;
 
 wvt = WVTransformBarotropicQG([Lx, Ly], [Nx, Ny], h=0.8, latitude=latitude);
 
@@ -31,7 +31,8 @@ wvt.addForcing(WVAdaptiveDamping(wvt));
 wvt.addForcing(WVBetaPlanePVAdvection(wvt));
 model = WVModel(wvt);
 
-outputFile = model.createNetCDFFileForModelOutput('QGMonopoleWithAlongTrack.nc',outputInterval=86400/4,shouldOverwriteExisting=1);
+outputFile = model.createNetCDFFileForModelOutput('QGMonopoleWithAlongTrack.nc',outputInterval=86400,shouldOverwriteExisting=1);
+model.addNetCDFOutputVariables("ssh","zeta_z")
 ats = AlongTrackSimulator();
 currentMissions = ats.currentMissions;
 for iMission = 1:length(currentMissions)
