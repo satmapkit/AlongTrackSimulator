@@ -143,7 +143,9 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             time(~withinBox) = [];
 
             % 2) project points
-            use requiredOptions;
+            lon0 = requiredOptions.lon0;
+            Lx = requiredOptions.Lx;
+            Ly = requiredOptions.Ly;
             [x,y] = AlongTrackSimulatorBase.LatitudeLongitudeToTransverseMercator(lat,lon,lon0=lon0);
 
             % 3) apply more precise filter
@@ -191,7 +193,9 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             time(~withinBox) = [];
 
             % 2) project points
-            use requiredOptions;
+            lon0 = requiredOptions.lon0;
+            Lx = requiredOptions.Lx;
+            Ly = requiredOptions.Ly;
             [x,y] = AlongTrackSimulatorBase.LatitudeLongitudeToTransverseMercator(lat,lon,lon0=lon0);
 
             % 3) apply more precise filter

@@ -18,7 +18,7 @@ classdef WVModelOutputGroupAlongTrack < WVModelOutputGroup
                 missionName {mustBeText}
                 ats AlongTrackSimulator
             end
-            self@WVModelOutputGroup(model,missionName);
+            self@WVModelOutputGroup(model,name=missionName);
             self.missionName = missionName;
             self.ats = ats;
             self.repeatCycle = ats.repeatCycleForMissionWithName(missionName);
@@ -110,6 +110,22 @@ classdef WVModelOutputGroupAlongTrack < WVModelOutputGroup
     end
 
     methods (Static)
+
+        function vars = classRequiredPropertyNames()
+            vars = {'missionName','name','repeatCycle'};
+        end
+
+        function propertyAnnotations = classDefinedPropertyAnnotations()
+            arguments (Output)
+                propertyAnnotations CAPropertyAnnotation
+            end
+            propertyAnnotations = CAPropertyAnnotation.empty(0,0);
+            propertyAnnotations(end+1) = CAPropertyAnnotation('missionName','name the mission');
+            propertyAnnotations(end+1) = CAPropertyAnnotation('name','name of output group');
+            propertyAnnotations(end+1) = CANumericProperty('repeatCycle', {}, 's','orbital repeat cycle (Inf indicates that the orbit is non-repeat)');
+            % propertyAnnotations(end+1) = CANumericProperty('firstPassoverTime', {}, 's','model time of first passover into the model domain');
+        end
+
         function tracks = convertTrackVectorToPassoverCellArray(alongtrack)
             % alongtrack is a struct with fields (t,x,y)
             trackIndices = find(diff(alongtrack.t)>1);

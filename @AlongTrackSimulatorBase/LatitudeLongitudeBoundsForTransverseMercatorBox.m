@@ -5,7 +5,10 @@ arguments
     options.Lx {mustBeNonempty}
     options.Ly {mustBeNonempty}
 end
-use options;
+lat0 = options.lat0;
+lon0 = options.lon0;
+Lx = options.Lx;
+Ly = options.Ly;
 
 [x0, y0] = AlongTrackSimulator.LatitudeLongitudeToTransverseMercator(lat0, lon0, lon0=lon0);
 x = zeros(6,1);
