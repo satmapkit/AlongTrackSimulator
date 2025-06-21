@@ -21,7 +21,7 @@ colorlimits = [-3 15];
 t_windowed = t_gridded;
 t_windowed(t_windowed > (t_windowed(end)-T)) = [];
 
-fig1 = figure('Units', 'points', 'Position', [50 50 860 420]);
+fig1 = figure('Units', 'points', 'Position', [50 50 860 420],Visible='off');
 set(gcf,'PaperPositionMode','auto')
 set(gcf, 'Color', 'w');
 
@@ -142,5 +142,5 @@ for iTime = 1:length(t_windowed)
     xlabel('km')
     title("all missions")
 
-    exportgraphics(gcf,sprintf('./movie-figures/t-%03d.png',iTime),Resolution=300)
+    exportgraphics(fig1,sprintf('./movie-figures/t-%03d.png',iTime),Resolution=300)
 end
