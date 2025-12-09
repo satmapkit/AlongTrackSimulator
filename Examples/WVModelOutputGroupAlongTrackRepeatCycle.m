@@ -55,7 +55,15 @@ classdef WVModelOutputGroupAlongTrackRepeatCycle < WVModelOutputGroup
             t = setdiff(t,self.timeOfLastIncrementWrittenToGroup);
         end
 
-        function writeTimeStepToNetCDFFile(self,t)
+        function writeTimeStepToNetCDFFile(self,ncfile,t)
+            arguments
+                self WVModelOutputGroup
+                ncfile NetCDFFile
+                t double
+            end
+            if ~self.didInitializeStorage
+                self.initializeOutputGroup(ncfile);
+            end
             % Override the behavior of the superclass.
             % When we reach a time point where the model stops, we will
             % actually write all the time points for the passover. The
