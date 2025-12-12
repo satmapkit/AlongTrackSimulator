@@ -7,16 +7,16 @@ classdef WVAlongTrackObservingSystem < WVObservingSystem
 
     methods
         function self = WVAlongTrackObservingSystem(model,alongTrackGroup)
-            %create a new observing system
+            %create a new along track observing system
             %
             % This class is intended to be subclassed, so it generally
             % assumed that this initialization will not be called directly.
             %
             % - Topic: Initialization
-            % - Declaration: self = WVObservingSystem(model,name)
+            % - Declaration: self = WVAlongTrackObservingSystem(model,alongTrackGroup)
             % - Parameter model: the WVModel instance
-            % - Parameter name: name of the observing system
-            % - Returns self: a new instance of WVObservingSystem
+            % - Parameter alongTrackGroup: name of the observing system
+            % - Returns self: a new instance of WVAlongTrackObservingSystem
             arguments
                 model WVModel
                 alongTrackGroup

@@ -29,7 +29,7 @@ excludedSuperclasses = {'handle'};
 classes = {'AlongTrackSimulator','WVAlongTrackObservingSystem','WVModelOutputGroupAlongTrack','WVModelOutputGroupAlongTrackRepeatCycle'};
 classDocumentation = ClassDocumentation.empty(length(classes),0);
 for iName=1:length(classes)
-    classDocumentation(iName) = ClassDocumentation(classes{iName},nav_order=iName,websiteRootURL=websiteRootURL,buildFolder=buildFolder,excludedSuperclasses=excludedSuperclasses);
+    classDocumentation(iName) = ClassDocumentation(classes{iName},nav_order=iName,websiteRootURL=websiteRootURL,buildFolder=buildFolder,websiteFolder=websiteFolder,parent=classFolderName,excludedSuperclasses=excludedSuperclasses);
 end
 arrayfun(@(a) a.writeToFile(),classDocumentation)
 
