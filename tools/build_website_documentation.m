@@ -22,13 +22,14 @@ if isfile(changelogPath)
     fclose(fid);
 end
 
+websiteRootURL = "AlongTrackSimulator/";
 classFolderName = 'Class documentation';
 websiteFolder = 'classes';
 excludedSuperclasses = {'handle'};
 classes = {'AlongTrackSimulator','WVAlongTrackObservingSystem','WVModelOutputGroupAlongTrack','WVModelOutputGroupAlongTrackRepeatCycle'};
 classDocumentation = ClassDocumentation.empty(length(classes),0);
 for iName=1:length(classes)
-    classDocumentation(iName) = ClassDocumentation(classes{iName},nav_order=iName,buildFolder=buildFolder,excludedSuperclasses=excludedSuperclasses);
+    classDocumentation(iName) = ClassDocumentation(classes{iName},nav_order=iName,websiteRootURL=websiteRootURL,buildFolder=buildFolder,excludedSuperclasses=excludedSuperclasses);
 end
 arrayfun(@(a) a.writeToFile(),classDocumentation)
 
