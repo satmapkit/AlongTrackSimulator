@@ -1,20 +1,67 @@
 classdef AlongTrackSimulator < AlongTrackSimulatorBase
-    %UNTITLED Summary of this class goes here
-    %   Detailed explanation goes here
+    % Simulate and manipulate satellite along-track ground tracks for altimetry missions.
+    %
+    % AlongTrackSimulator provides utilities to compute orbit ground tracks (optionally with
+    % nodal precession), enforce exact repeat cycles for supported missions, and project
+    % tracks into a local Cartesian box for along-track sampling and modeling workflows.
+    %
+    % - Topic: AlongTrack — Simulation
+    % - Declaration: classdef AlongTrackSimulator < AlongTrackSimulatorBase
+    % - Properties missionParameters: mission parameter catalog (containers.Map)
+    % - Properties (Constant) mu, J2, RE, T_sidereal: physical constants used by orbital routines
     properties
+        % Mission parameter catalog keyed by mission abbreviation.
+        %
+        % A dictionary (string -> struct) describing orbit geometry and metadata
+        % for supported altimetry missions. The constructor loads a default catalog and
+        % may adjust some parameters (e.g., semi-major axis) to enforce exact repeat cycles.
+        %
+        % - Topic: Mission catalog
         missionParameters
     end
 
     properties (Constant)
-        mu = 398600.4418; % Earth's gravitational parameter (km^3/s^2)
-        J2 = 1.08262668e-3;      % Earth's J2 coefficient
-        RE = 6378.1363;        % Earth's equatorial radius (km)
-        T_sidereal = 86164;
+        % Earth's standard gravitational parameter μ (km^3/s^2).
+        %
+        % Used for orbital period computations via Kepler's third law.
+        %
+        % - Topic: Orbital mechanics
+        mu = 398600.4418
+
+        % Earth's second zonal harmonic coefficient J2.
+        %
+        % Used to approximate nodal precession and nodal period corrections.
+        %
+        % - Topic: Orbital mechanics
+        J2 = 1.08262668e-3
+
+        % Earth's equatorial radius (km).
+        %
+        % Used for simple Earth geometry in ground-track calculations.
+        %
+        % - Topic: Orbital mechanics
+        RE = 6378.1363
+
+        % Length of a sidereal day (seconds).
+        %
+        % Used when mapping inertial motion to Earth-fixed longitude.
+        %
+        % - Topic: Orbital mechanics
+        T_sidereal = 86164
     end
 
     methods
 
         function self = AlongTrackSimulator()
+            % Create an AlongTrackSimulator instance.
+            %
+            % Loads the mission parameter catalog and (when applicable) adjusts mission
+            % parameters so that repeat-cycle missions have an exact repeat by solving for
+            % a semi-major axis consistent with the requested passes-per-cycle.
+            %
+            % - Topic: Initialization
+            % - Declaration: self = AlongTrackSimulator()
+            % - Returns self: AlongTrackSimulator instance
             self.missionParameters = AlongTrackSimulator.missionParametersCatalog();
             missions = self.missionParameters.keys;
             for i=1:numel(missions)
@@ -31,6 +78,20 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         end
 
         function [lat,lon,time] = groundTrackForMissionWithName(self,mission,options)
+            % Compute the ground track for a mission over one or more orbits.
+            %
+            % Returns latitude/longitude as a function of time for the specified mission's
+            % orbital elements. By default, the track starts at the mission start date and
+            % spans options.N_orbits orbits; you may override the time vector.
+            %
+            % - Topic: Ground tracks
+            % - Declaration: [lat,lon,time] = groundTrackForMissionWithName(mission,options)
+            % - Parameter mission: text (mission key in missionParameters)
+            % - Parameter options.time: numeric or datetime vector (optional) — sample times
+            % - Parameter options.N_orbits: double (default 1) — number of orbits to simulate when options.time is not provided
+            % - Returns lat: double column vector — latitude [deg]
+            % - Returns lon: double column vector — longitude [deg]
+            % - Returns time: same type as options.time or numeric seconds — time stamps for each point
             arguments
                 self AlongTrackSimulator
                 mission {mustBeText}
@@ -59,6 +120,19 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         end
 
         function [lat,lon,time] = repeatGroundTrackForMissionWithName(self,mission)
+            % Compute the full repeat-cycle ground track for a mission.
+            %
+            % For missions with a defined repeat cycle, returns the ground track over one
+            % complete repeat period (repeat_cycle days). For missions
+            % without a defined repeat cycle, this function will throw an
+            % error.
+            %
+            % - Topic: Ground tracks
+            % - Declaration: [lat,lon,time] = repeatGroundTrackForMissionWithName(mission)
+            % - Parameter mission: text (mission key in missionParameters)
+            % - Returns lat: double column vector — latitude [deg]
+            % - Returns lon: double column vector — longitude [deg]
+            % - Returns time: numeric column vector — elapsed seconds from start of repeat cycle
             missionParametersDict = self.missionParameters;
             p = missionParametersDict(mission);
             N_orbits = p.passes_per_cycle/2;
@@ -69,25 +143,73 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         end
 
         function T = orbitalPeriodForMissionWithName(self,mission)
+            % Return the orbital period for a mission.
+            %
+            % - Topic: Orbital periods
+            % - Declaration: T = orbitalPeriodForMissionWithName(mission)
+            % - Parameter mission: text (mission key in missionParameters)
+            % - Returns T: double — orbital period [s]
+            arguments
+                self AlongTrackSimulator
+                mission {mustBeText}
+            end
             a = self.missionParameters(mission).semi_major_axis;
             T = 2*pi*sqrt(a^3/self.mu);  % Orbital period [s]
         end
 
         function T = nodalPeriodForMissionWithName(self,mission)
+            % Return the nodal period for a mission (including J2 nodal precession).
+            %
+            % Uses a J2-based correction to compute the period in the Earth-fixed frame.
+            %
+            % - Topic: Orbital periods
+            % - Declaration: T = nodalPeriodForMissionWithName(mission)
+            % - Parameter mission: text (mission key in missionParameters)
+            % - Returns T: double — nodal period [s]
+            arguments
+                self AlongTrackSimulator
+                mission {mustBeText}
+            end
             p = self.missionParameters(mission);
             T = self.computeNodalPeriod(p.semi_major_axis,p.eccentricity, p.inclination);  % Orbital period [s]
         end
 
         function T = repeatCycleForMissionWithName(self,mission)
+            % Return the mission repeat cycle length in seconds.
+            %
+            % - Topic: Repeat cycles
+            % - Declaration: T = repeatCycleForMissionWithName(mission)
+            % - Parameter mission: text (mission key in missionParameters)
+            % - Returns T: double — repeat cycle duration [s]
+            arguments
+                self AlongTrackSimulator
+                mission {mustBeText}
+            end
             p = self.missionParameters(mission);
             T = p.repeat_cycle*86400;
         end
 
         function missions = missions(self)
+            % List all mission keys in the catalog.
+            %
+            % - Topic: Mission catalog
+            % - Declaration: missions = missions()
+            % - Returns missions: string column vector — mission keys
+            arguments
+                self AlongTrackSimulator
+            end
             missions = self.missionParameters.keys;
         end
 
         function missions = currentMissions(self)
+            % List missions whose end_date is infinite (assumed currently operating).
+            %
+            % - Topic: Mission catalog
+            % - Declaration: missions = currentMissions()
+            % - Returns missions: string column vector — mission keys
+            arguments
+                self AlongTrackSimulator
+            end
             allMissions = self.missionParameters.keys;
             missions = string.empty(0,0);
             for i=1:numel(allMissions)
@@ -99,6 +221,17 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         end
 
         function summarizeMissionWithName(self,missionNames)
+            % Display a table summarizing one or more missions.
+            %
+            % Prints mission name, abbreviation, start/end dates, and repeat cycle.
+            %
+            % - Topic: Mission catalog
+            % - Declaration: summarizeMissionWithName(missionNames)
+            % - Parameter missionNames: string or string array — mission keys to summarize
+            arguments
+                self AlongTrackSimulator
+                missionNames string
+            end
             Name = strings(numel(missionNames),1);
             Abbreviation = strings(numel(missionNames),1);
             Start = strings(numel(missionNames),1);
@@ -116,12 +249,30 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         end
 
         function alongtrack = projectedPointsForMissionWithName(self,missionName,requiredOptions,options)
-            % Returns a structure (x,y,time) of all passes within the
-            % specified window. The structure also contains repeatTime,
-            % for which the mission repeats.
+            % Project mission ground-track points into a local Transverse Mercator box.
             %
-            % This function only works for missions with repeat orbits. For
-            % a mission that is not on a repeat orbit, you need to use...
+            % Computes the ground track for the requested mission within a bounding box
+            % centered at (lon0,lat0) with size (Lx,Ly). Points are
+            % returned in projected coordinates (using a transverse
+            % Mercator projector). By default the origin is set to the
+            % lower-left of the bounding box, but can be optionally set to
+            % the center.
+            % 
+            % The function returns a struct with fields (x,y,t)
+            %   - x: double column vector — projected x-coordinates
+            %   - y: double column vector — projected y-coordinates
+            %   - t: column vector — times corresponding to each point (sorted)
+            %
+            % - Topic: Along-track sampling
+            % - Declaration: alongtrack = projectedPointsForMissionWithName(missionName,requiredOptions,options)
+            % - Parameter missionName: string — mission key
+            % - Parameter requiredOptions.Lx: double — box width [m]
+            % - Parameter requiredOptions.Ly: double — box height  [m]
+            % - Parameter requiredOptions.lat0: double — box reference latitude [deg]
+            % - Parameter requiredOptions.lon0: double — central meridian for projection [deg]
+            % - Parameter options.time: numeric/datetime vector — times at which to sample the orbit
+            % - Parameter options.origin: {'lower-left','center'} (default 'lower-left') — coordinate origin convention for returned (x,y)
+            % - Returns: alongtrack struct with field (x,y,t)
             arguments
                 self AlongTrackSimulator
                 missionName string
@@ -167,12 +318,35 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
 
         
         function alongtrack = projectedPointsForRepeatMissionWithName(self,missionName,requiredOptions,options)
-            % Returns a structure (x,y,time) of all passes within the
-            % specified window. The structure also contains repeatTime,
-            % for which the mission repeats.
+            % Project repeat-cycle ground-track points into a local Transverse Mercator box.
             %
-            % This function only works for missions with repeat orbits. For
-            % a mission that is not on a repeat orbit, you need to use...
+            % Similar to -projectedPointsForMissionWithName, but works only
+            % for missions with repeat cycles and returns exactly one
+            % repeat cycle through the box.
+            %
+            % Computes the ground track for the requested mission within a bounding box
+            % centered at (lon0,lat0) with size (Lx,Ly). Points are
+            % returned in projected coordinates (using a transverse
+            % Mercator projector). By default the origin is set to the
+            % lower-left of the bounding box, but can be optionally set to
+            % the center.
+            % 
+            % The function returns a struct with fields (x,y,t)
+            %   - x: double column vector — projected x-coordinates
+            %   - y: double column vector — projected y-coordinates
+            %   - t: column vector — times corresponding to each point (sorted)
+            %   - repeatCycle: time of the repeat cycle [s]
+            %
+            % - Topic: Along-track sampling
+            % - Declaration: alongtrack = projectedPointsForMissionWithName(missionName,requiredOptions,options)
+            % - Parameter missionName: string — mission key
+            % - Parameter requiredOptions.Lx: double — box width [m]
+            % - Parameter requiredOptions.Ly: double — box height  [m]
+            % - Parameter requiredOptions.lat0: double — box reference latitude [deg]
+            % - Parameter requiredOptions.lon0: double — central meridian for projection [deg]
+            % - Parameter options.time: numeric/datetime vector — times at which to sample the orbit
+            % - Parameter options.origin: {'lower-left','center'} (default 'lower-left') — coordinate origin convention for returned (x,y)
+            % - Returns: alongtrack struct with field (x,y,t,repeatCycle)
             arguments
                 self AlongTrackSimulator
                 missionName string
@@ -216,43 +390,37 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             alongtrack.repeatCycle = self.repeatCycleForMissionWithName(missionName);
         end
 
-        % function alongtrack = projectedPointsForReferenceOrbit(self,options)
-        %     arguments
-        %         self AlongTrackSimulatorEmpirical
-        %         options.Lx
-        %         options.Ly
-        %         options.lat0
-        %         options.lon0
-        %     end
-        %     optionsArgs = namedargs2cell(options);
-        %     [x0, y0, minLat, minLon, maxLat, maxLon] = AlongTrackSimulatorEmpirical.LatitudeLongitudeBoundsForTransverseMercatorBox(optionsArgs{:});
-        %     [lat,lon,time] = self.pathForMission("s6a");
-        %     withinBox = lat >= minLat & lat <= maxLat & lon >= minLon & lon <= maxLon;
-        %     lat(~withinBox) = [];
-        %     lon(~withinBox) = [];
-        %     time(~withinBox) = [];
-        %     use options;
-        %     [x,y] = AlongTrackSimulatorEmpirical.LatitudeLongitudeToTransverseMercator(lat,lon,lon0=lon0);
-        %     out_of_bounds = (x < x0 - Lx/2) | (x > x0 + Lx/2) | (y < y0 - Ly/2) | (y > y0 + Ly/2);
-        %     alongtrack.x = x(~out_of_bounds);
-        %     alongtrack.y = y(~out_of_bounds)-y0;
-        %     alongtrack.time = time(~out_of_bounds);
-        %     [alongtrack.time,I] = sort(alongtrack.time);
-        %     alongtrack.x = alongtrack.x(I);
-        %     alongtrack.y = alongtrack.y(I);
-        % end
     end
 
     methods (Static)
+
         missionData = missionParametersCatalog();
+
         [lat, lon] = computeGroundTrack(altitude, e, incl, RAAN, argPerigee, M0, t)
+
         [lat, lon] = computeGroundTrackWithNodalPrecession(semi_major_axis, e, incl, RAAN, omega, M0, t)
+
         [lat, lon] = computeGroundTrackWithNodalPrecessionSimple(semi_major_axis, e, incl, RAAN, omega, M0, t)
+
         [lat, lon] = computeGroundTrackWithNodalPrecessionVectorized(semi_major_axis, e, incl, RAAN, omega, M0, t)
+
         T_nodal = computeNodalPeriod(a, e, i)
 
-
         function outputGroup = wvmOutputGroupForRepeatMissionWithName(model, missionName)
+            % Build a WaveVortexModel output group for an along-track sampling pattern.
+            %
+            % Convenience function that uses the model's domain (wvt.Lx/Ly and latitude)
+            % to generate repeat-cycle projected track points.
+            %
+            % - Topic: WaveVortexModel integration
+            % - Declaration: outputGroup = wvmOutputGroupForRepeatMissionWithName(model, missionName)
+            % - Parameter model: WVModel
+            % - Parameter missionName: string — mission key
+            % - Returns outputGroup: WVModelOutputGroup
+            arguments
+                model WVModel
+                missionName string
+            end
             ats = AlongTrackSimulator();
             wvt = model.wvt;
             alongtrack = ats.projectedPointsForRepeatMissionWithName(missionName,Lx=wvt.Lx,Ly=wvt.Ly,lat0=wvt.latitude,lon0=0);
@@ -282,6 +450,18 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         % end
 
         function tracks = convertAlongTrackStructureToPass(alongtrack)
+            % Convert a flat alongtrack struct into a cell array of passes.
+            %
+            % Splits an alongtrack struct (with fields x, y, t) whenever there is a
+            % discontinuity in time (diff(t) > 1).
+            %
+            % - Topic: Along-track sampling
+            % - Declaration: tracks = convertAlongTrackStructureToPass(alongtrack)
+            % - Parameter alongtrack: struct — must contain fields x, y, t
+            % - Returns tracks: cell array — each cell contains a struct for one pass
+            arguments
+                alongtrack struct
+            end
             trackIndices = find(diff(alongtrack.t)>1);
             trackIndices(end+1) = length(alongtrack.t);
             startIndex = 1;
@@ -296,6 +476,15 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         end
 
         function inclination = inclinationForExactRepeatForMission(mission)
+            % Compute inclination required for an exact repeat orbit for the mission.
+            %
+            % - Topic: Exact repeat orbits
+            % - Declaration: inclination = inclinationForExactRepeatForMission(mission)
+            % - Parameter mission: text — mission key
+            % - Returns inclination: double — inclination (units per implementation)
+            arguments
+                mission {mustBeText}
+            end
             mu = AlongTrackSimulator.mu;
             J2 = AlongTrackSimulator.J2;
             RE = AlongTrackSimulator.RE;
@@ -315,6 +504,15 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         end
 
         function a = semimajorAxisForExactRepeatForMission(mission)
+            % Solve for semi-major axis that yields an exact repeat cycle for the mission.
+            %
+            % - Topic: Exact repeat orbits
+            % - Declaration: a = semimajorAxisForExactRepeatForMission(mission)
+            % - Parameter mission: text — mission key
+            % - Returns a: double — semi-major axis
+            arguments
+                mission {mustBeText}
+            end
             mu = AlongTrackSimulator.mu;
             J2 = AlongTrackSimulator.J2;
             RE = AlongTrackSimulator.RE;
@@ -336,6 +534,15 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         end
 
         function J2 = j2ForExactRepeatForMission(mission)
+            % Return the J2 value used in exact-repeat calculations.
+            %
+            % - Topic: AlongTrack — Exact repeat orbits
+            % - Declaration: J2 = j2ForExactRepeatForMission(mission)
+            % - Parameter mission: text — mission key
+            % - Returns J2: double — J2 coefficient
+            arguments
+                mission {mustBeText}
+            end
             mu = AlongTrackSimulator.mu;
             J2 = AlongTrackSimulator.J2;
             RE = AlongTrackSimulator.RE;
@@ -357,6 +564,15 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         end
 
         function e = eccentricityForExactRepeatForMission(mission)
+            % Return the eccentricity used in exact-repeat calculations.
+            %
+            % - Topic: AlongTrack — Exact repeat orbits
+            % - Declaration: e = eccentricityForExactRepeatForMission(mission)
+            % - Parameter mission: text — mission key
+            % - Returns e: double — eccentricity
+            arguments
+                mission {mustBeText}
+            end
             mu = AlongTrackSimulator.mu;
             J2 = AlongTrackSimulator.J2;
             RE = AlongTrackSimulator.RE;
@@ -378,6 +594,18 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         end
 
         function E = kepler1(M,e)
+            % Solve Kepler's equation for eccentric anomaly E.
+            %
+            % Given mean anomaly M and eccentricity e, solves M = E - e*sin(E) using
+            % a particular iterative scheme. Different kepler* variants implement different
+            % initial guesses and/or update formulas; see code for details.
+            %
+            % - Topic: Orbital mechanics
+            % - Declaration: E = kepler1(M,e)
+            % - Parameter M: double (scalar or vector) — mean anomaly [rad]
+            % - Parameter e: double (scalar) — eccentricity
+            % - Returns E: double (same size as M) — eccentric anomaly [rad]
+
             % Solve Kepler's Equation for Eccentric Anomaly using Newton-Raphson
             E = M; % Initial guess
             for j = 1:10 % Iterate to improve accuracy
@@ -386,6 +614,18 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         end
 
         function E = kepler2(M,e)
+            % Solve Kepler's equation for eccentric anomaly E.
+            %
+            % Given mean anomaly M and eccentricity e, solves M = E - e*sin(E) using
+            % a particular iterative scheme. Different kepler* variants implement different
+            % initial guesses and/or update formulas; see code for details.
+            %
+            % - Topic: Orbital mechanics
+            % - Declaration: E = kepler2(M,e)
+            % - Parameter M: double (scalar or vector) — mean anomaly [rad]
+            % - Parameter e: double (scalar) — eccentricity
+            % - Returns E: double (same size as M) — eccentric anomaly [rad]
+
             % Solve Kepler's Equation: M = E - e*sin(E)
             % Using Newton-Raphson method for iterative solution
             E = M;            % Initial guess
@@ -403,6 +643,18 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         end
 
         function E = kepler2vec(M, e)
+            % Solve Kepler's equation for eccentric anomaly E.
+            %
+            % Given mean anomaly M and eccentricity e, solves M = E - e*sin(E) using
+            % a particular iterative scheme. Different kepler* variants implement different
+            % initial guesses and/or update formulas; see code for details.
+            %
+            % - Topic: Orbital mechanics
+            % - Declaration: E = kepler2vec(M,e)
+            % - Parameter M: double (scalar or vector) — mean anomaly [rad]
+            % - Parameter e: double (scalar) — eccentricity
+            % - Returns E: double (same size as M) — eccentric anomaly [rad]
+
             %KEPLER2  Vectorized solution of Kepler's equation: M = E - e*sin(E)
             %   E = kepler2(M, e) solves for the eccentric anomaly E given mean anomaly M
             %   and eccentricity e.  M and e may be arrays of the same size.
@@ -436,6 +688,18 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
 
 
         function E = kepler3(M,e)
+            % Solve Kepler's equation for eccentric anomaly E.
+            %
+            % Given mean anomaly M and eccentricity e, solves M = E - e*sin(E) using
+            % a particular iterative scheme. Different kepler* variants implement different
+            % initial guesses and/or update formulas; see code for details.
+            %
+            % - Topic: Orbital mechanics
+            % - Declaration: E = kepler3(M,e)
+            % - Parameter M: double (scalar or vector) — mean anomaly [rad]
+            % - Parameter e: double (scalar) — eccentricity
+            % - Returns E: double (same size as M) — eccentric anomaly [rad]
+
             % Define Kepler's Equation as a function to minimize
             kepler_eq = @(E) abs(E - e * sin(E) - M); % Absolute error in Kepler's equation
 
@@ -445,6 +709,17 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         end
 
         function E = kepler4(M,e)
+            % Solve Kepler's equation for eccentric anomaly E.
+            %
+            % Given mean anomaly M and eccentricity e, solves M = E - e*sin(E) using
+            % a particular iterative scheme. Different kepler* variants implement different
+            % initial guesses and/or update formulas; see code for details.
+            %
+            % - Topic: Orbital mechanics
+            % - Declaration: E = kepler4(M,e)
+            % - Parameter M: double (scalar or vector) — mean anomaly [rad]
+            % - Parameter e: double (scalar) — eccentricity
+            % - Returns E: double (same size as M) — eccentric anomaly [rad]
             E = M; % Initial guess
             tol = 1e-8;
             max_iter = 10;
@@ -466,6 +741,18 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
 
 
         function E = kepler5(M,e)
+            % Solve Kepler's equation for eccentric anomaly E.
+            %
+            % Given mean anomaly M and eccentricity e, solves M = E - e*sin(E) using
+            % a particular iterative scheme. Different kepler* variants implement different
+            % initial guesses and/or update formulas; see code for details.
+            %
+            % - Topic: Orbital mechanics
+            % - Declaration: E = kepler5(M,e)
+            % - Parameter M: double (scalar or vector) — mean anomaly [rad]
+            % - Parameter e: double (scalar) — eccentricity
+            % - Returns E: double (same size as M) — eccentric anomaly [rad]
+            
             % Hybrid Newton-Raphson & Halley's Method
             if e < 0.8
                 E = M + e * sin(M); % Good initial guess for low e
