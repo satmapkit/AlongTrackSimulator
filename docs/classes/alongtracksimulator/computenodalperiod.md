@@ -3,13 +3,13 @@ layout: default
 title: computeNodalPeriod
 parent: AlongTrackSimulator
 grand_parent: Classes
-nav_order: 10
+nav_order: 9
 mathjax: true
 ---
 
 #  computeNodalPeriod
 
-COMPUTE_NODAL_PERIOD Computes the nodal precession period
+Computes the nodal precession period from orbital parameters
 
 
 ---

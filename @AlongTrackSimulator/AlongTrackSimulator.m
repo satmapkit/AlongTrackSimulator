@@ -5,10 +5,11 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
     % nodal precession), enforce exact repeat cycles for supported missions, and project
     % tracks into a local Cartesian box for along-track sampling and modeling workflows.
     %
-    % - Topic: AlongTrack — Simulation
+    % - Topic: Initialization
+    % - Topic: Constant orbital parameters
+    % - Topic: Ground tracks
+    %
     % - Declaration: classdef AlongTrackSimulator < AlongTrackSimulatorBase
-    % - Properties missionParameters: mission parameter catalog (containers.Map)
-    % - Properties (Constant) mu, J2, RE, T_sidereal: physical constants used by orbital routines
     properties
         % Mission parameter catalog keyed by mission abbreviation.
         %
@@ -25,28 +26,28 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         %
         % Used for orbital period computations via Kepler's third law.
         %
-        % - Topic: Orbital mechanics
+        % - Topic: Constant orbital parameters
         mu = 398600.4418
 
         % Earth's second zonal harmonic coefficient J2.
         %
         % Used to approximate nodal precession and nodal period corrections.
         %
-        % - Topic: Orbital mechanics
+        % - Topic: Constant orbital parameters
         J2 = 1.08262668e-3
 
         % Earth's equatorial radius (km).
         %
         % Used for simple Earth geometry in ground-track calculations.
         %
-        % - Topic: Orbital mechanics
+        % - Topic: Constant orbital parameters
         RE = 6378.1363
 
         % Length of a sidereal day (seconds).
         %
         % Used when mapping inertial motion to Earth-fixed longitude.
         %
-        % - Topic: Orbital mechanics
+        % - Topic: Constant orbital parameters
         T_sidereal = 86164
     end
 
@@ -145,7 +146,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         function T = orbitalPeriodForMissionWithName(self,mission)
             % Return the orbital period for a mission.
             %
-            % - Topic: Orbital periods
+            % - Topic: Mission catalog — fetching parameters
             % - Declaration: T = orbitalPeriodForMissionWithName(mission)
             % - Parameter mission: text (mission key in missionParameters)
             % - Returns T: double — orbital period [s]
@@ -162,7 +163,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             %
             % Uses a J2-based correction to compute the period in the Earth-fixed frame.
             %
-            % - Topic: Orbital periods
+            % - Topic: Mission catalog — fetching parameters
             % - Declaration: T = nodalPeriodForMissionWithName(mission)
             % - Parameter mission: text (mission key in missionParameters)
             % - Returns T: double — nodal period [s]
@@ -177,7 +178,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         function T = repeatCycleForMissionWithName(self,mission)
             % Return the mission repeat cycle length in seconds.
             %
-            % - Topic: Repeat cycles
+            % - Topic: Mission catalog — fetching parameters
             % - Declaration: T = repeatCycleForMissionWithName(mission)
             % - Parameter mission: text (mission key in missionParameters)
             % - Returns T: double — repeat cycle duration [s]
@@ -263,7 +264,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             %   - y: double column vector — projected y-coordinates
             %   - t: column vector — times corresponding to each point (sorted)
             %
-            % - Topic: Along-track sampling
+            % - Topic: Ground tracks
             % - Declaration: alongtrack = projectedPointsForMissionWithName(missionName,requiredOptions,options)
             % - Parameter missionName: string — mission key
             % - Parameter requiredOptions.Lx: double — box width [m]
@@ -337,7 +338,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             %   - t: column vector — times corresponding to each point (sorted)
             %   - repeatCycle: time of the repeat cycle [s]
             %
-            % - Topic: Along-track sampling
+            % - Topic: Ground tracks
             % - Declaration: alongtrack = projectedPointsForMissionWithName(missionName,requiredOptions,options)
             % - Parameter missionName: string — mission key
             % - Parameter requiredOptions.Lx: double — box width [m]
@@ -396,13 +397,13 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
 
         missionData = missionParametersCatalog();
 
-        [lat, lon] = computeGroundTrack(altitude, e, incl, RAAN, argPerigee, M0, t)
+        [lat, lon] = computeGroundTrack(semi_major_axis, e, incl, RAAN_0, argPerigee, M0, t)
 
         [lat, lon] = computeGroundTrackWithNodalPrecession(semi_major_axis, e, incl, RAAN, omega, M0, t)
 
         [lat, lon] = computeGroundTrackWithNodalPrecessionSimple(semi_major_axis, e, incl, RAAN, omega, M0, t)
 
-        [lat, lon] = computeGroundTrackWithNodalPrecessionVectorized(semi_major_axis, e, incl, RAAN, omega, M0, t)
+        [lat, lon] = computeGroundTrackCircularOrbit(semi_major_axis, e, incl, RAAN, omega, M0, t)
 
         T_nodal = computeNodalPeriod(a, e, i)
 
@@ -412,7 +413,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             % Convenience function that uses the model's domain (wvt.Lx/Ly and latitude)
             % to generate repeat-cycle projected track points.
             %
-            % - Topic: WaveVortexModel integration
+            % - Topic: Utilities — WaveVortexModel integration
             % - Declaration: outputGroup = wvmOutputGroupForRepeatMissionWithName(model, missionName)
             % - Parameter model: WVModel
             % - Parameter missionName: string — mission key
@@ -455,7 +456,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             % Splits an alongtrack struct (with fields x, y, t) whenever there is a
             % discontinuity in time (diff(t) > 1).
             %
-            % - Topic: Along-track sampling
+            % - Topic: Utilities
             % - Declaration: tracks = convertAlongTrackStructureToPass(alongtrack)
             % - Parameter alongtrack: struct — must contain fields x, y, t
             % - Returns tracks: cell array — each cell contains a struct for one pass
@@ -478,7 +479,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         function inclination = inclinationForExactRepeatForMission(mission)
             % Compute inclination required for an exact repeat orbit for the mission.
             %
-            % - Topic: Exact repeat orbits
+            % - Topic: Forcing exact Repeat Orbits
             % - Declaration: inclination = inclinationForExactRepeatForMission(mission)
             % - Parameter mission: text — mission key
             % - Returns inclination: double — inclination (units per implementation)
@@ -506,7 +507,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         function a = semimajorAxisForExactRepeatForMission(mission)
             % Solve for semi-major axis that yields an exact repeat cycle for the mission.
             %
-            % - Topic: Exact repeat orbits
+            % - Topic: Forcing exact Repeat Orbits
             % - Declaration: a = semimajorAxisForExactRepeatForMission(mission)
             % - Parameter mission: text — mission key
             % - Returns a: double — semi-major axis
@@ -536,7 +537,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         function J2 = j2ForExactRepeatForMission(mission)
             % Return the J2 value used in exact-repeat calculations.
             %
-            % - Topic: Exact repeat orbits
+            % - Topic: Forcing exact Repeat Orbits
             % - Declaration: J2 = j2ForExactRepeatForMission(mission)
             % - Parameter mission: text — mission key
             % - Returns J2: double — J2 coefficient
@@ -566,7 +567,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         function e = eccentricityForExactRepeatForMission(mission)
             % Return the eccentricity used in exact-repeat calculations.
             %
-            % - Topic: Exact repeat orbits
+            % - Topic: Forcing exact Repeat Orbits
             % - Declaration: e = eccentricityForExactRepeatForMission(mission)
             % - Parameter mission: text — mission key
             % - Returns e: double — eccentricity
@@ -600,7 +601,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             % a particular iterative scheme. Different kepler* variants implement different
             % initial guesses and/or update formulas; see code for details.
             %
-            % - Topic: Orbital mechanics
+            % - Topic: Utilities — Solving Kepler's equation
             % - Declaration: E = kepler1(M,e)
             % - Parameter M: double (scalar or vector) — mean anomaly [rad]
             % - Parameter e: double (scalar) — eccentricity
@@ -620,7 +621,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             % a particular iterative scheme. Different kepler* variants implement different
             % initial guesses and/or update formulas; see code for details.
             %
-            % - Topic: Orbital mechanics
+            % - Topic: Utilities — Solving Kepler's equation
             % - Declaration: E = kepler2(M,e)
             % - Parameter M: double (scalar or vector) — mean anomaly [rad]
             % - Parameter e: double (scalar) — eccentricity
@@ -649,7 +650,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             % a particular iterative scheme. Different kepler* variants implement different
             % initial guesses and/or update formulas; see code for details.
             %
-            % - Topic: Orbital mechanics
+            % - Topic: Utilities — Solving Kepler's equation
             % - Declaration: E = kepler2vec(M,e)
             % - Parameter M: double (scalar or vector) — mean anomaly [rad]
             % - Parameter e: double (scalar) — eccentricity
@@ -694,7 +695,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             % a particular iterative scheme. Different kepler* variants implement different
             % initial guesses and/or update formulas; see code for details.
             %
-            % - Topic: Orbital mechanics
+            % - Topic: Utilities — Solving Kepler's equation
             % - Declaration: E = kepler3(M,e)
             % - Parameter M: double (scalar or vector) — mean anomaly [rad]
             % - Parameter e: double (scalar) — eccentricity
@@ -715,7 +716,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             % a particular iterative scheme. Different kepler* variants implement different
             % initial guesses and/or update formulas; see code for details.
             %
-            % - Topic: Orbital mechanics
+            % - Topic: Utilities — Solving Kepler's equation
             % - Declaration: E = kepler4(M,e)
             % - Parameter M: double (scalar or vector) — mean anomaly [rad]
             % - Parameter e: double (scalar) — eccentricity
@@ -747,7 +748,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             % a particular iterative scheme. Different kepler* variants implement different
             % initial guesses and/or update formulas; see code for details.
             %
-            % - Topic: Orbital mechanics
+            % - Topic: Utilities — Solving Kepler's equation
             % - Declaration: E = kepler5(M,e)
             % - Parameter M: double (scalar or vector) — mean anomaly [rad]
             % - Parameter e: double (scalar) — eccentricity
