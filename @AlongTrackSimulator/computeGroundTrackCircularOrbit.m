@@ -1,31 +1,27 @@
-function [lat, lon] = computeGroundTrackCircularOrbit(semi_major_axis, e, incl, RAAN, argPerigee, M0, t)
+function [lat, lon] = computeGroundTrackCircularOrbit(semi_major_axis, e, incl, RAAN, omega, M0, t)
+% computes the ground track (latitude and longitude) of a satellite given
+% the orbital parameters and time vector.
+%
+% - Topic: Groundtrack Algorithms
+% - Declaration: [lat, lon] = computeGroundTrackCircularOrbit(semi_major_axis, e, incl, RAAN_0, omega, M0, t)
+% - Parameter semi_major_axis: semi-major axis [km]
+% - Parameter e: eccentricity (0 for circular, >0 for elliptical)
+% - Parameter incl: inclination [degrees]
+% - Parameter RAAN_0: right ascension of ascending node [rad]
+% - Parameter omega: argument of perigee [rad]
+% - Parameter M0: initial mean anomaly at t = 0 [rad]
+% - Parameter t: time vector [s]
+% - Returns lat: latitude (deg) vector corresponding to times in t
+% - Returns lon: longitude (deg) vector corresponding to times in t
 arguments
     semi_major_axis 
     e 
     incl 
     RAAN 
-    argPerigee 
+    omega 
     M0 
     t 
 end
-% computeGroundTrack computes the ground track (latitude and longitude) 
-% of a satellite given the orbital parameters and time vector.
-%
-% Inputs:
-%   a         - Semi-major axis [km]
-%   e         - Eccentricity (0 for circular, >0 for elliptical)
-%   incl      - Inclination [rad]
-%   RAAN      - Right Ascension of Ascending Node [rad]
-%   argPerigee- Argument of perigee [rad]
-%   M0        - Initial mean anomaly at t = 0 [rad]
-%   t         - Time vector [s]
-%   mu        - Earth's gravitational parameter [km^3/s^2]
-%   Re        - Earth's radius [km]
-%   omega_e   - Earth's rotation rate [rad/s]
-%
-% Outputs:
-%   lat       - Latitude (deg) vector corresponding to times in t
-%   lon       - Longitude (deg) vector corresponding to times in t
 
 % Define constants
 mu = 398600.4418;         % Earth's gravitational parameter [km^3/s^2]

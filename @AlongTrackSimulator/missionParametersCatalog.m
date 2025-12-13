@@ -1,7 +1,7 @@
 function missionData = missionParametersCatalog()
 % Create a dictionary for satellite altimetry missions
 %
-% - Topic: AlongTrack — Mission catalog
+% - Topic: Mission catalog
 % - Declaration: missionData = missionParametersCatalog()
 % - Returns missionData: dictionary — mission key -> mission parameter struct
 

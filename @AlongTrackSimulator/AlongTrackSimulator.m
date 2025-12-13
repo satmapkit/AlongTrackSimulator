@@ -536,7 +536,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         function J2 = j2ForExactRepeatForMission(mission)
             % Return the J2 value used in exact-repeat calculations.
             %
-            % - Topic: AlongTrack — Exact repeat orbits
+            % - Topic: Exact repeat orbits
             % - Declaration: J2 = j2ForExactRepeatForMission(mission)
             % - Parameter mission: text — mission key
             % - Returns J2: double — J2 coefficient
@@ -566,7 +566,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         function e = eccentricityForExactRepeatForMission(mission)
             % Return the eccentricity used in exact-repeat calculations.
             %
-            % - Topic: AlongTrack — Exact repeat orbits
+            % - Topic: Exact repeat orbits
             % - Declaration: e = eccentricityForExactRepeatForMission(mission)
             % - Parameter mission: text — mission key
             % - Returns e: double — eccentricity
