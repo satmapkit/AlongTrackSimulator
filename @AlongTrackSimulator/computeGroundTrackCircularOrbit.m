@@ -1,6 +1,5 @@
 function [lat, lon] = computeGroundTrackCircularOrbit(semi_major_axis, e, incl, RAAN, omega, M0, t)
-% computes the ground track (latitude and longitude) of a satellite given
-% the orbital parameters and time vector.
+% computes the ground track assuming a circular orbit
 %
 % - Topic: Utilities — Groundtrack Algorithms
 % - Declaration: [lat, lon] = computeGroundTrackCircularOrbit(semi_major_axis, e, incl, RAAN_0, omega, M0, t)

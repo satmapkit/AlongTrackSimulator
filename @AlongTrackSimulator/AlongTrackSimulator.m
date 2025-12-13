@@ -653,7 +653,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         end
 
         function E = kepler2vec(M, e)
-            % Solve Kepler's equation for eccentric anomaly E.
+            % Solve Kepler's equation for eccentric anomaly E (fastest version)
             %
             % Given mean anomaly M and eccentricity e, solves M = E - e*sin(E) using
             % a particular iterative scheme. Different kepler* variants implement different

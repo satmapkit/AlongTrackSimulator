@@ -9,7 +9,7 @@ mathjax: true
 
 #  computeGroundTrackCircularOrbit
 
-computes the ground track (latitude and longitude) of a satellite given
+computes the ground track assuming a circular orbit
 
 
 ---
@@ -32,6 +32,5 @@ computes the ground track (latitude and longitude) of a satellite given
 + `lon`  longitude (deg) vector corresponding to times in t
 
 ## Discussion
-the orbital parameters and time vector.
- 
+
                       

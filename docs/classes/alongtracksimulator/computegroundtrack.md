@@ -9,7 +9,7 @@ mathjax: true
 
 #  computeGroundTrack
 
-computes the ground track (latitude and longitude) of a satellite given
+computes the ground track of a satellite given including the nodal precession (unoptimized version)
 
 
 ---
@@ -32,6 +32,5 @@ computes the ground track (latitude and longitude) of a satellite given
 + `lon`  Longitude (deg) vector corresponding to times in t
 
 ## Discussion
-the orbital parameters and time vector.
- 
+
                       

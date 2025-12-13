@@ -1,6 +1,5 @@
 function [lat, lon] = computeGroundTrackWithNodalPrecession(semi_major_axis, e, incl, RAAN_0, omega, M0, t)
-% computes the ground track (latitude and longitude) of a satellite given
-% the orbital parameters and time vector.
+% computes the ground track of a satellite given including the nodal precession
 %
 % - Topic: Utilities — Groundtrack Algorithms
 % - Declaration: [lat, lon] = computeGroundTrackWithNodalPrecession(semi_major_axis, e, incl, RAAN_0, omega, M0, t)

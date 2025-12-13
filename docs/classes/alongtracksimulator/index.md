@@ -64,14 +64,14 @@ Simulate and manipulate satellite along-track ground tracks for altimetry missio
     + [`j2ForExactRepeatForMission`](/AlongTrackSimulator/classes/alongtracksimulator/j2forexactrepeatformission.html) Return the J2 value used in exact-repeat calculations.
     + [`semimajorAxisForExactRepeatForMission`](/AlongTrackSimulator/classes/alongtracksimulator/semimajoraxisforexactrepeatformission.html) Solve for semi-major axis that yields an exact repeat cycle for the mission.
   + Groundtrack algorithms
-    + [`computeGroundTrack`](/AlongTrackSimulator/classes/alongtracksimulator/computegroundtrack.html) computes the ground track (latitude and longitude) of a satellite given
-    + [`computeGroundTrackCircularOrbit`](/AlongTrackSimulator/classes/alongtracksimulator/computegroundtrackcircularorbit.html) computes the ground track (latitude and longitude) of a satellite given
-    + [`computeGroundTrackWithNodalPrecession`](/AlongTrackSimulator/classes/alongtracksimulator/computegroundtrackwithnodalprecession.html) computes the ground track (latitude and longitude) of a satellite given
-    + [`computeGroundTrackWithNodalPrecessionSimple`](/AlongTrackSimulator/classes/alongtracksimulator/computegroundtrackwithnodalprecessionsimple.html) computes the ground track (latitude and longitude) of a satellite given
+    + [`computeGroundTrack`](/AlongTrackSimulator/classes/alongtracksimulator/computegroundtrack.html) computes the ground track of a satellite given including the nodal precession (unoptimized version)
+    + [`computeGroundTrackCircularOrbit`](/AlongTrackSimulator/classes/alongtracksimulator/computegroundtrackcircularorbit.html) computes the ground track assuming a circular orbit
+    + [`computeGroundTrackWithNodalPrecession`](/AlongTrackSimulator/classes/alongtracksimulator/computegroundtrackwithnodalprecession.html) computes the ground track of a satellite given including the nodal precession
+    + [`computeGroundTrackWithNodalPrecessionSimple`](/AlongTrackSimulator/classes/alongtracksimulator/computegroundtrackwithnodalprecessionsimple.html) computes the ground track of a satellite given including the nodal precession (unoptimized version)
   + Solving Kepler's equation
     + [`kepler1`](/AlongTrackSimulator/classes/alongtracksimulator/kepler1.html) Solve Kepler's equation for eccentric anomaly E.
     + [`kepler2`](/AlongTrackSimulator/classes/alongtracksimulator/kepler2.html) Solve Kepler's equation for eccentric anomaly E.
-    + [`kepler2vec`](/AlongTrackSimulator/classes/alongtracksimulator/kepler2vec.html) Solve Kepler's equation for eccentric anomaly E.
+    + [`kepler2vec`](/AlongTrackSimulator/classes/alongtracksimulator/kepler2vec.html) Solve Kepler's equation for eccentric anomaly E (fastest version)
     + [`kepler3`](/AlongTrackSimulator/classes/alongtracksimulator/kepler3.html) Solve Kepler's equation for eccentric anomaly E.
     + [`kepler4`](/AlongTrackSimulator/classes/alongtracksimulator/kepler4.html) Solve Kepler's equation for eccentric anomaly E.
     + [`kepler5`](/AlongTrackSimulator/classes/alongtracksimulator/kepler5.html) Solve Kepler's equation for eccentric anomaly E.

@@ -9,7 +9,7 @@ mathjax: true
 
 #  kepler2vec
 
-Solve Kepler's equation for eccentric anomaly E.
+Solve Kepler's equation for eccentric anomaly E (fastest version)
 
 
 ---
