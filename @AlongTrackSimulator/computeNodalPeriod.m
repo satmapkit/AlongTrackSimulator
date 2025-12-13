@@ -1,7 +1,7 @@
 function T_nodal = computeNodalPeriod(a, e, i)
 % Computes the nodal precession period from orbital parameters
 %
-% - Topic: Utilities
+% - Topic: Utilities — Computing orbital parameters
 % - Declaration: T_nodal = computeNodalPeriod(a, e, i)
 % - Parameter a: semi-major axis [km]
 % - Parameter e: eccentricity (0 for circular, >0 for elliptical)

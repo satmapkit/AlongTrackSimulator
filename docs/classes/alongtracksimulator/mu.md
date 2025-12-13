@@ -9,7 +9,7 @@ mathjax: true
 
 #  mu
 
-Earth's standard gravitational parameter μ (km^3/s^2).
+Earth's standard gravitational parameter μ ($$km^3/s^2$$).
 
 
 ---
