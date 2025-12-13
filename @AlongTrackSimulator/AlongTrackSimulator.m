@@ -20,7 +20,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
     %
     % - Declaration: classdef AlongTrackSimulator < AlongTrackSimulatorBase
     properties
-        % Mission parameter catalog keyed by mission abbreviation.
+        % Mission parameter dictionary keyed by mission abbreviation.
         %
         % A dictionary (string -> struct) describing orbit geometry and metadata
         % for supported altimetry missions. The constructor loads a default catalog and
@@ -212,7 +212,7 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
         end
 
         function missions = currentMissions(self)
-            % List missions whose end_date is infinite (assumed currently operating).
+            % List mission keys for currently operating satellites.
             %
             % - Topic: Mission catalog
             % - Declaration: missions = currentMissions()

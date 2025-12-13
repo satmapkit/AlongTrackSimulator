@@ -1,5 +1,5 @@
 # AlongTrack Simulator
-A MATLAB  ground track simulator for altimetry missions
+A MATLAB  ground track simulator for satellite altimetry missions
 
 ## Installation
 

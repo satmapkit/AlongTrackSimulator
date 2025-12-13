@@ -9,7 +9,7 @@ mathjax: true
 
 #  currentMissions
 
-List missions whose end_date is infinite (assumed currently operating).
+List mission keys for currently operating satellites.
 
 
 ---

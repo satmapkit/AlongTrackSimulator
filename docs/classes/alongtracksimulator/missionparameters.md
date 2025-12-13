@@ -9,7 +9,7 @@ mathjax: true
 
 #  missionParameters
 
-Mission parameter catalog keyed by mission abbreviation.
+Mission parameter dictionary keyed by mission abbreviation.
 
 
 ---

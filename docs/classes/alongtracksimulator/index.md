@@ -38,9 +38,8 @@ Simulate and manipulate satellite along-track ground tracks for altimetry missio
   + [`T_sidereal`](/AlongTrackSimulator/classes/alongtracksimulator/t_sidereal.html) Length of a sidereal day (seconds).
   + [`mu`](/AlongTrackSimulator/classes/alongtracksimulator/mu.html) Earth's standard gravitational parameter μ ($$km^3/s^2$$).
 + Mission catalog
-  + [`currentMissions`](/AlongTrackSimulator/classes/alongtracksimulator/currentmissions.html) List missions whose end_date is infinite (assumed currently operating).
-  + [`missionParameters`](/AlongTrackSimulator/classes/alongtracksimulator/missionparameters.html) Mission parameter catalog keyed by mission abbreviation.
-  + [`missionParametersCatalog`](/AlongTrackSimulator/classes/alongtracksimulator/missionparameterscatalog.html) Create a dictionary for satellite altimetry missions
+  + [`currentMissions`](/AlongTrackSimulator/classes/alongtracksimulator/currentmissions.html) List mission keys for currently operating satellites.
+  + [`missionParameters`](/AlongTrackSimulator/classes/alongtracksimulator/missionparameters.html) Mission parameter dictionary keyed by mission abbreviation.
   + [`missions`](/AlongTrackSimulator/classes/alongtracksimulator/missions.html) List all mission keys in the catalog.
   + [`summarizeMissionWithName`](/AlongTrackSimulator/classes/alongtracksimulator/summarizemissionwithname.html) Display a table summarizing one or more missions.
   + Fetching parameters
@@ -76,6 +75,8 @@ Simulate and manipulate satellite along-track ground tracks for altimetry missio
     + [`kepler3`](/AlongTrackSimulator/classes/alongtracksimulator/kepler3.html) Solve Kepler's equation for eccentric anomaly E.
     + [`kepler4`](/AlongTrackSimulator/classes/alongtracksimulator/kepler4.html) Solve Kepler's equation for eccentric anomaly E.
     + [`kepler5`](/AlongTrackSimulator/classes/alongtracksimulator/kepler5.html) Solve Kepler's equation for eccentric anomaly E.
+  + Mission catalog
+    + [`missionParametersCatalog`](/AlongTrackSimulator/classes/alongtracksimulator/missionparameterscatalog.html) Create a dictionary for satellite altimetry missions
 
 
 ---
