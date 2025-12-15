@@ -1,69 +1,67 @@
-//
-// Code and syntax highlighting
-//
-// stylelint-disable selector-no-qualifying-type, declaration-block-semicolon-newline-after,declaration-block-single-line-max-declarations, selector-no-type, selector-max-type
+// $nav-width: 26rem; // your chosen "max" sidebar width
 
+// // _sass/custom/custom.scss
 
-// @media (min-width: 66.5rem) {
-//     .site-nav, .site-header, .site-footer {
-//         width:18.0rem
-//     }
+// :root {
+//   /* min width, fluid width, max width */
+//   --jtd-sidebar-width: clamp(18rem, 75vw, 26rem);
 // }
 
-// _sass/custom/custom.scss
+// @media (min-width: 50rem) {
+//   /* Sidebar sizing */
+//   .side-bar {
+//     width: var(--jtd-sidebar-width);
+//     min-width: var(--jtd-sidebar-width);
+//     max-width: var(--jtd-sidebar-width);
+//     flex: 0 0 var(--jtd-sidebar-width);
+//   }
 
-// $nav-width: 300px;
+//   .side-bar .site-header,
+//   .side-bar .site-nav,
+//   .side-bar .site-footer {
+//     width: 100%;
+//     max-width: none;
+//   }
 
-// .side-bar {
-//   @include mq(lg) {
-//     width: $nav-width;
-//     min-width: $nav-width;
+//   /* Keep main content aligned */
+//   .main {
+//     margin-left: var(--jtd-sidebar-width);
+//   }
+
+//   /* Nav links: no wrapping, ellipsis instead */
+//   .side-bar .nav-list .nav-list-link {
+//     white-space: nowrap;
+//     overflow: hidden;
+//     text-overflow: ellipsis;
+//     word-break: normal;
+//     overflow-wrap: normal;
 //   }
 // }
 
-// .main{
-//   @include mq(lg) {
-//         margin-left: calc( 264px + 30px);
-//         margin-right: 30px;
-//         max-width: 1920px;
-//   }
-// }
-
-// /* Increase usable width inside the sidebar nav without shifting layout */
-// .site-header {
-//  width: 300px;     /* or 280px / 300px — adjust to taste */
-//  max-width: 300px;
-// }
-
-// .site-nav {
-//  width: 300px;     /* or 280px / 300px — adjust to taste */
-//  max-width: 300px;
-// }
-
-// .nav-list .nav-list-link {
-//  white-space: nowrap;   /* Prevents the link text from wrapping */
-//  overflow: hidden;
-//  text-overflow: ellipsis;
-// }
-
-$nav-width: 26rem; // your chosen "max" sidebar width
-
-// _sass/custom/custom.scss
+// _sass/custom/setup.scss
+$nav-width: 26rem;
+$nav-width-md: 18rem; // optional; pick something reasonable for md
 
 :root {
-  /* min width, fluid width, max width */
-  --jtd-sidebar-width: clamp(18rem, 75vw, 26rem);
+  --jtd-sidebar-width: clamp(18rem, 24vw, 26rem);
 }
 
-@media (min-width: 50rem) {
-  /* Sidebar sizing */
+/* Match JTD's breakpoints (md and up => fixed sidebar + main offset) */
+@include mq(md) {
   .side-bar {
     width: var(--jtd-sidebar-width);
     min-width: var(--jtd-sidebar-width);
     max-width: var(--jtd-sidebar-width);
+
+    /* Important in flex layouts */
     flex: 0 0 var(--jtd-sidebar-width);
   }
 
+  .side-bar + .main {
+    margin-left: var(--jtd-sidebar-width);
+  }
+
+  /* Make sidebar internals fill the sidebar */
   .side-bar .site-header,
   .side-bar .site-nav,
   .side-bar .site-footer {
@@ -71,18 +69,20 @@ $nav-width: 26rem; // your chosen "max" sidebar width
     max-width: none;
   }
 
-  /* Keep main content aligned */
-  .main {
-    margin-left: var(--jtd-sidebar-width);
-  }
-
-  /* Nav links: no wrapping, ellipsis instead */
+  /* Nav links: no wrap + ellipsis */
   .side-bar .nav-list .nav-list-link {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     word-break: normal;
     overflow-wrap: normal;
+  }
+}
+
+/* Safety: below md, ensure content isn't offset (prevents overlap) */
+@include mq(md, max) {
+  .side-bar + .main {
+    margin-left: 0;
   }
 }
 
