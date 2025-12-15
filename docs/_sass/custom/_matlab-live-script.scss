@@ -104,3 +104,24 @@ $matlab-cell-radius: 2px;
 .main-content pre.language-matlabtextoutput code {
   border-radius: 0 !important;
 }
+
+/* ============================================================
+   FINAL TUNING: match MATLAB Live Script font sizing
+   ============================================================ */
+
+/* MATLAB input cells */
+.main-content div.language-matlab.highlighter-rouge pre.highlight {
+  font-size: 0.86em;   // MATLAB Live Script code is noticeably smaller
+}
+
+/* MATLAB text output */
+.main-content pre.language-matlabtextoutput {
+  font-size: 0.84em;   // output is slightly smaller than input in MATLAB
+}
+
+/* Ensure JTD does not shrink nested <code> further */
+.main-content div.language-matlab.highlighter-rouge pre.highlight > code,
+.main-content pre.language-matlabtextoutput > code {
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
