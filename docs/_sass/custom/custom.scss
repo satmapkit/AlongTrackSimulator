@@ -46,23 +46,35 @@
 //  text-overflow: ellipsis;
 // }
 
-$nav-width: 22rem; // your chosen "max" sidebar width
+$nav-width: 26rem; // your chosen "max" sidebar width
 
-// Use one shared value so sidebar + content offset stay in sync.
+// _sass/custom/custom.scss
+
 :root {
-  /* min, preferred (scales with viewport), max */
-  --jtd-sidebar-width: clamp(16rem, 22vw, 22rem);
+  /* min width, fluid width, max width */
+  --jtd-sidebar-width: clamp(18rem, 24vw, 26rem);
 }
 
-/* Only apply when the sidebar layout is active (not the mobile-drawer layout). */
 @media (min-width: 50rem) {
+  /* Sidebar sizing */
   .side-bar {
     width: var(--jtd-sidebar-width);
   }
 
-  /* Keep main content aligned with the resized sidebar */
+  /* Keep main content aligned */
   .main {
     margin-left: var(--jtd-sidebar-width);
+  }
+
+  /* Nav links: no wrapping, ellipsis instead */
+  .side-bar .nav-list .nav-list-link {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    /* defensive: prevent camelCase breaks */
+    word-break: normal;
+    overflow-wrap: normal;
   }
 }
 
