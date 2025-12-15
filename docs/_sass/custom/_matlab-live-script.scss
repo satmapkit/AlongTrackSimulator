@@ -20,7 +20,7 @@ $matlab-cell-radius: 2px;
   border-radius: $matlab-cell-radius;
 
   /* MATLAB looks flatter: less padding than before */
-  padding: 0.55rem 0.75rem;
+  padding: 0.35rem 0.75rem;
 
   /* ensure full width */
   display: block;
@@ -75,7 +75,7 @@ $matlab-cell-radius: 2px;
 
   font-family: $matlab-mono;
   font-size: 0.94em;
-  line-height: 1.35;
+  line-height: 1.00;
   white-space: pre;
   overflow-x: auto;
 }

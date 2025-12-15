@@ -1,13 +1,13 @@
 %[text] # Getting Started
 %[text] This tutorial demonstrates the basic usage of the simulator.
-%[text] ## Initialization
+%[text] ### Initialization
 %[text] You always start by initializing the simulator.
 ats = AlongTrackSimulator();
 %[text] The simulator has a list satellite altimetry missions, found by calling `ats.missions()`, of which there are 8 operating as of this writing,
 ats.currentMissions() %[output:75d93789]
 %[text] The mission codes correspond to entries in the `missionParameters` dictionary, which can be accessed directly, or quickly summarized,
 ats.summarizeMissionWithName(ats.currentMissions) %[output:6eda35c5]
-%[text] ## Ground tracks
+%[text] ### Ground tracks
 %[text] You can now query for the ground tracks for any given mission using `groundTrackForMissionWithName`. You can request specific times, or just a certain number of orbits from the start date,
 [lat,lon,time] = ats.groundTrackForMissionWithName("s3a",N_orbits=5);
 figure, geoscatter(lat,lon,1.5^2,"blue","filled") %[output:221d99ca]

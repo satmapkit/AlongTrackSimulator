@@ -10,7 +10,7 @@ permalink: /getting-started
 
 This tutorial demonstrates the basic usage of the simulator.
 
-# Initialization
+## Initialization
 
 You always start by initializing the simulator.
 
@@ -18,7 +18,7 @@ You always start by initializing the simulator.
 ats = AlongTrackSimulator();
 ```
 
-The simulator has a list satellite altimetry missions, found by calling `ats.missions()`, of which there are 8 operatoring as of this writing,
+The simulator has a list satellite altimetry missions, found by calling `ats.missions()`, of which there are 8 operating as of this writing,
 
 ```matlab
 ats.currentMissions()
@@ -59,7 +59,7 @@ ats.summarizeMissionWithName(ats.currentMissions)
     "SWOT 21-day cycle"                              "swon"       "21-Jul-2023"             "Inf"     "20.8646" 
 ```
 
-# Ground tracks
+## Ground tracks
 
 You can now query for the ground tracks for any given mission using `groundTrackForMissionWithName`. You can request specific times, or just a certain number of orbits from the start date,
 
