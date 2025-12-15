@@ -346,3 +346,106 @@ figure.highlight {
     border-top-right-radius: 0;
   }
 }
+
+/* ============================================================
+   MATLAB Live Script Markdown styling for Just the Docs
+   ============================================================ */
+
+/* MATLAB-like monospace stack */
+$matlab-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+              "Liberation Mono", "Courier New", monospace;
+
+/* MATLAB-like colors */
+$matlab-cell-bg: #f7f7f7;
+$matlab-cell-border: #d9d9d9;
+$matlab-cell-radius: 3px;
+$matlab-output-text: #111;
+
+/* ------------------------------------------------------------
+   Global code block normalization
+   ------------------------------------------------------------ */
+.highlighter-rouge,
+figure.highlight,
+div.highlight,
+pre.highlight,
+pre.highlight code {
+  font-family: $matlab-mono;
+  font-size: 0.95em;
+  line-height: 1.35;
+}
+
+/* ------------------------------------------------------------
+   MATLAB INPUT CELLS (```matlab)
+   ------------------------------------------------------------ */
+div.language-matlab {
+
+  margin: 0.6rem 0;
+
+  div.highlight,
+  pre.highlight {
+    background: $matlab-cell-bg;
+    border: 1px solid $matlab-cell-border;
+    border-radius: $matlab-cell-radius;
+  }
+
+  pre.highlight {
+    padding: 0.75rem 0.9rem;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  pre.highlight code {
+    background: transparent;
+  }
+}
+
+/* ------------------------------------------------------------
+   MATLAB TEXT OUTPUT (```matlabTextOutput)
+   ------------------------------------------------------------ */
+div.language-matlabTextOutput {
+
+  div.highlight,
+  pre.highlight {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  pre.highlight {
+    padding: 0.15rem 0 0.45rem 1.6rem;  // indent like MATLAB output
+    margin-top: -0.2rem;
+    color: $matlab-output-text;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  pre.highlight code {
+    background: transparent !important;
+    color: inherit;
+  }
+
+  // Neutralize Rouge line-level styling
+  span,
+  .line,
+  .rouge-gutter,
+  .rouge-code {
+    background: transparent !important;
+  }
+
+  .rouge-table,
+  .rouge-table td {
+    border: none !important;
+    padding: 0 !important;
+  }
+}
+
+/* ------------------------------------------------------------
+   Inline code (lighter, MATLAB-like)
+   ------------------------------------------------------------ */
+p code,
+li code {
+  font-family: $matlab-mono;
+  font-size: 0.95em;
+  padding: 0.08em 0.28em;
+  border-radius: 3px;
+}
