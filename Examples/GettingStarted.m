@@ -3,7 +3,7 @@
 %[text] ## Initialization
 %[text] You always start by initializing the simulator.
 ats = AlongTrackSimulator();
-%[text] The simulator has a list satellite altimetry missions, found by calling `ats.missions()`, of which there are 8 operatoring as of this writing,
+%[text] The simulator has a list satellite altimetry missions, found by calling `ats.missions()`, of which there are 8 operating as of this writing,
 ats.currentMissions() %[output:75d93789]
 %[text] The mission codes correspond to entries in the `missionParameters` dictionary, which can be accessed directly, or quickly summarized,
 ats.summarizeMissionWithName(ats.currentMissions) %[output:6eda35c5]
