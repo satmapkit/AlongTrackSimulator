@@ -55,13 +55,6 @@ $nav-width: 26rem; // your chosen "max" sidebar width
   --jtd-sidebar-width: clamp(18rem, 75vw, 26rem);
 }
 
-.main,
-.main-content-wrap {
-  margin-left: 0;
-  left: auto;
-  width: 100%;
-}
-
 @media (min-width: 50rem) {
   /* Sidebar sizing */
   .side-bar {
