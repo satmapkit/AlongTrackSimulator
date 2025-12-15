@@ -29,21 +29,41 @@
 //   }
 // }
 
-/* Increase usable width inside the sidebar nav without shifting layout */
-.site-header {
- width: 300px;     /* or 280px / 300px — adjust to taste */
- max-width: 300px;
+// /* Increase usable width inside the sidebar nav without shifting layout */
+// .site-header {
+//  width: 300px;     /* or 280px / 300px — adjust to taste */
+//  max-width: 300px;
+// }
+
+// .site-nav {
+//  width: 300px;     /* or 280px / 300px — adjust to taste */
+//  max-width: 300px;
+// }
+
+// .nav-list .nav-list-link {
+//  white-space: nowrap;   /* Prevents the link text from wrapping */
+//  overflow: hidden;
+//  text-overflow: ellipsis;
+// }
+
+$nav-width: 22rem; // your chosen "max" sidebar width
+
+// Use one shared value so sidebar + content offset stay in sync.
+:root {
+  /* min, preferred (scales with viewport), max */
+  --jtd-sidebar-width: clamp(16rem, 22vw, 22rem);
 }
 
-.site-nav {
- width: 300px;     /* or 280px / 300px — adjust to taste */
- max-width: 300px;
-}
+/* Only apply when the sidebar layout is active (not the mobile-drawer layout). */
+@media (min-width: 50rem) {
+  .side-bar {
+    width: var(--jtd-sidebar-width);
+  }
 
-.nav-list .nav-list-link {
- white-space: nowrap;   /* Prevents the link text from wrapping */
- overflow: hidden;
- text-overflow: ellipsis;
+  /* Keep main content aligned with the resized sidebar */
+  .main {
+    margin-left: var(--jtd-sidebar-width);
+  }
 }
 
 @import "./matlab-live-script";
