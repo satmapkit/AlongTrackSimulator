@@ -9,106 +9,89 @@
         width:18.0rem
     }
 }
-
 /* ============================================================
-   MATLAB Live Script Markdown styling for Just the Docs
+   MATLAB Live Script blocks (Just the Docs + Rouge + copy button)
    ============================================================ */
 
-/* MATLAB-like monospace stack */
 $matlab-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
               "Liberation Mono", "Courier New", monospace;
 
-/* MATLAB-like colors */
 $matlab-cell-bg: #f7f7f7;
 $matlab-cell-border: #d9d9d9;
 $matlab-cell-radius: 3px;
-$matlab-output-text: #111;
 
-/* ------------------------------------------------------------
-   Global code block normalization
-   ------------------------------------------------------------ */
-.highlighter-rouge,
-figure.highlight,
-div.highlight,
-pre.highlight,
-pre.highlight code {
+/* ---------- MATLAB INPUT (```matlab) ---------- */
+/* Style ONLY the outer wrapper to avoid “double box” */
+div.language-matlab.highlighter-rouge {
+  margin: 0.55rem 0 0.35rem 0;
+  background: $matlab-cell-bg;
+  border: 1px solid $matlab-cell-border;
+  border-radius: $matlab-cell-radius;
+  padding: 0.65rem 0.85rem;
+  position: relative; /* for copy button positioning */
+}
+
+/* Strip inner wrappers completely */
+div.language-matlab.highlighter-rouge > div.highlight {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+div.language-matlab.highlighter-rouge pre.highlight {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+
   font-family: $matlab-mono;
-  font-size: 0.95em;
+  font-size: 0.92em;
   line-height: 1.35;
+  white-space: pre;
+  overflow-x: auto;
 }
 
-/* ------------------------------------------------------------
-   MATLAB INPUT CELLS (```matlab)
-   ------------------------------------------------------------ */
-div.language-matlab {
-
-  margin: 0.6rem 0;
-
-  div.highlight,
-  pre.highlight {
-    background: $matlab-cell-bg;
-    border: 1px solid $matlab-cell-border;
-    border-radius: $matlab-cell-radius;
-  }
-
-  pre.highlight {
-    padding: 0.75rem 0.9rem;
-    overflow-x: auto;
-    white-space: pre;
-  }
-
-  pre.highlight code {
-    background: transparent;
-  }
+/* Ensure the <code> doesn’t introduce its own background/padding */
+div.language-matlab.highlighter-rouge pre.highlight > code.language-matlab {
+  background: transparent !important;
+  padding: 0 !important;
 }
 
-/* ------------------------------------------------------------
-   MATLAB TEXT OUTPUT (```matlabTextOutput)
-   ------------------------------------------------------------ */
-div.language-matlabTextOutput {
-
-  div.highlight,
-  pre.highlight {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-
-  pre.highlight {
-    padding: 0.15rem 0 0.45rem 1.6rem;  // indent like MATLAB output
-    margin-top: -0.2rem;
-    color: $matlab-output-text;
-    overflow-x: auto;
-    white-space: pre;
-  }
-
-  pre.highlight code {
-    background: transparent !important;
-    color: inherit;
-  }
-
-  // Neutralize Rouge line-level styling
-  span,
-  .line,
-  .rouge-gutter,
-  .rouge-code {
-    background: transparent !important;
-  }
-
-  .rouge-table,
-  .rouge-table td {
-    border: none !important;
-    padding: 0 !important;
-  }
+/* Copy button: keep it from affecting box height and match MATLAB-ish subtlety */
+div.language-matlab.highlighter-rouge > button {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  margin: 0 !important;
 }
 
-/* ------------------------------------------------------------
-   Inline code (lighter, MATLAB-like)
-   ------------------------------------------------------------ */
-p code,
-li code {
+/* ---------- MATLAB TEXT OUTPUT (```matlabTextOutput) ---------- */
+/* Your output is NOT wrapped by Rouge; it is a bare <pre>. */
+pre.language-matlabtextoutput {
+  margin: 0.05rem 0 0.95rem 0;     /* closer to preceding input cell */
+  padding: 0.05rem 0 0.05rem 1.35rem; /* indent output */
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+
   font-family: $matlab-mono;
-  font-size: 0.95em;
-  padding: 0.08em 0.28em;
-  border-radius: 3px;
+  font-size: 0.90em;
+  line-height: 1.35;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* Make sure the code tag is also transparent */
+pre.language-matlabtextoutput > code.language-matlabtextoutput {
+  background: transparent !important;
+  padding: 0 !important;
+  color: inherit;
+}
+
+/* Optional: if Just the Docs styles ALL <pre> with a border/background,
+   this ensures the matlabTextOutput stays unboxed. */
+pre.language-matlabtextoutput,
+pre.language-matlabtextoutput code {
+  border-radius: 0 !important;
 }
