@@ -1,44 +1,20 @@
-// $nav-width: 26rem; // your chosen "max" sidebar width
+/* Keep all navigation sections expanded */
+/* Always show children in the sidebar nav */
+.nav-list details > .nav-list {
+  display: block;
+}
 
-// // _sass/custom/custom.scss
+/* Optional: hide the disclosure triangle */
+.nav-list summary {
+  list-style: none;
+  cursor: default;
+}
 
-// :root {
-//   /* min width, fluid width, max width */
-//   --jtd-sidebar-width: clamp(18rem, 75vw, 26rem);
-// }
+.nav-list summary::-webkit-details-marker {
+  display: none;
+}
 
-// @media (min-width: 50rem) {
-//   /* Sidebar sizing */
-//   .side-bar {
-//     width: var(--jtd-sidebar-width);
-//     min-width: var(--jtd-sidebar-width);
-//     max-width: var(--jtd-sidebar-width);
-//     flex: 0 0 var(--jtd-sidebar-width);
-//   }
-
-//   .side-bar .site-header,
-//   .side-bar .site-nav,
-//   .side-bar .site-footer {
-//     width: 100%;
-//     max-width: none;
-//   }
-
-//   /* Keep main content aligned */
-//   .main {
-//     margin-left: var(--jtd-sidebar-width);
-//   }
-
-//   /* Nav links: no wrapping, ellipsis instead */
-//   .side-bar .nav-list .nav-list-link {
-//     white-space: nowrap;
-//     overflow: hidden;
-//     text-overflow: ellipsis;
-//     word-break: normal;
-//     overflow-wrap: normal;
-//   }
-// }
-
-// _sass/custom/setup.scss
+// Set our sidebar width.
 $nav-width: 26rem;
 $nav-width-md: 18rem; // optional; pick something reasonable for md
 
@@ -78,12 +54,5 @@ $nav-width-md: 18rem; // optional; pick something reasonable for md
     overflow-wrap: normal;
   }
 }
-
-// /* Safety: below md, ensure content isn't offset (prevents overlap) */
-// @include mq(md, max) {
-//   .side-bar + .main {
-//     margin-left: 0;
-//   }
-// }
 
 @import "./matlab-live-script";
