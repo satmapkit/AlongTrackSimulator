@@ -45,7 +45,7 @@ The mission codes correspond to entries in the `missionParameters` dictionary, w
 ats.summarizeMissionWithName(ats.currentMissions)
 ```
 
-```
+```matlabTextOutput
                        Name                       Abbreviation            Start              End     RepeatCycle
     __________________________________________    ____________    ______________________    _____    ___________
 
