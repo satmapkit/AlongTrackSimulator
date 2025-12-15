@@ -1,16 +1,15 @@
-/* Keep all navigation sections expanded */
-/* Always show children in the sidebar nav */
-.nav-list details > .nav-list {
-  display: block;
+/* Force all nav <details> content to be visible even when closed */
+.side-bar .nav-list details:not([open]) > *:not(summary) {
+  display: block !important;
 }
 
-/* Optional: hide the disclosure triangle */
-.nav-list summary {
-  list-style: none;
+/* Optional: make the summary not look/act like a toggle */
+.side-bar .nav-list summary {
   cursor: default;
+  list-style: none;
 }
 
-.nav-list summary::-webkit-details-marker {
+.side-bar .nav-list summary::-webkit-details-marker {
   display: none;
 }
 
