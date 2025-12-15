@@ -59,6 +59,11 @@ $nav-width: 26rem; // your chosen "max" sidebar width
   /* Sidebar sizing */
   .side-bar {
     width: var(--jtd-sidebar-width);
+    min-width: var(--jtd-sidebar-width);
+    max-width: var(--jtd-sidebar-width);
+
+    /* THIS is the key for flex layouts */
+    flex: 0 0 var(--jtd-sidebar-width);
   }
 
   /* Keep main content aligned */
