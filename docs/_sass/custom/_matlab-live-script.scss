@@ -1,77 +1,86 @@
 /* ============================================================
-   MATLAB Live Script blocks (Just the Docs + Rouge + copy button)
+   MATLAB Live Script blocks (Just the Docs + Rouge)
+   Aim: match MATLAB exporter look (flatter cell, tighter spacing,
+        indented output, hide copy button for matlab blocks).
    ============================================================ */
 
 $matlab-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
               "Liberation Mono", "Courier New", monospace;
 
-$matlab-cell-bg: #f7f7f7;
-$matlab-cell-border: #d9d9d9;
-$matlab-cell-radius: 3px;
+$matlab-cell-bg: #f5f5f5;      // slightly closer to MATLAB
+$matlab-cell-border: #d0d0d0;
+$matlab-cell-radius: 2px;
 
 /* ---------- MATLAB INPUT (```matlab) ---------- */
-/* Style ONLY the outer wrapper to avoid “double box” */
-div.language-matlab.highlighter-rouge {
-  margin: 0.55rem 0 0.35rem 0;
+/* Outer wrapper: one flat “cell” */
+.main-content div.language-matlab.highlighter-rouge {
+  margin: 0.50rem 0 0.10rem 0;     // tighter to following output
   background: $matlab-cell-bg;
   border: 1px solid $matlab-cell-border;
   border-radius: $matlab-cell-radius;
-  padding: 0.65rem 0.85rem;
-  position: relative; /* for copy button positioning */
+
+  /* MATLAB looks flatter: less padding than before */
+  padding: 0.55rem 0.75rem;
+
+  /* ensure full width */
+  display: block;
 }
 
-/* Strip inner wrappers completely */
-div.language-matlab.highlighter-rouge > div.highlight {
+/* Remove inner “double box” chrome */
+.main-content div.language-matlab.highlighter-rouge > div.highlight,
+.main-content div.language-matlab.highlighter-rouge pre.highlight {
   background: transparent !important;
   border: 0 !important;
+  box-shadow: none !important;
   padding: 0 !important;
   margin: 0 !important;
 }
 
-div.language-matlab.highlighter-rouge pre.highlight {
-  background: transparent !important;
-  border: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-
+/* Code typography */
+.main-content div.language-matlab.highlighter-rouge pre.highlight {
   font-family: $matlab-mono;
-  font-size: 0.92em;
+  font-size: 0.98em;   // MATLAB export reads a touch larger
   line-height: 1.35;
   white-space: pre;
   overflow-x: auto;
 }
 
-/* Ensure the <code> doesn’t introduce its own background/padding */
-div.language-matlab.highlighter-rouge pre.highlight > code.language-matlab {
+/* Make sure <code> doesn’t shrink due to theme’s global code rule */
+.main-content div.language-matlab.highlighter-rouge pre.highlight > code.language-matlab {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
   background: transparent !important;
   padding: 0 !important;
 }
 
-/* Copy button: keep it from affecting box height and match MATLAB-ish subtlety */
-div.language-matlab.highlighter-rouge > button {
-  position: absolute;
-  top: 0.35rem;
-  right: 0.35rem;
-  margin: 0 !important;
+/* MATLAB exporter has no “copy” affordance — hide it for closer match */
+.main-content div.language-matlab.highlighter-rouge > button {
+  display: none !important;
 }
 
+
 /* ---------- MATLAB TEXT OUTPUT (```matlabTextOutput) ---------- */
-/* MATLAB text output is a bare <pre><code>, not Rouge-wrapped */
+/* In your build, output is a bare <pre><code> (no Rouge wrapper) */
 .main-content pre.language-matlabtextoutput {
-  margin: 0.05rem 0 0.95rem 0;
-  padding: 0.10rem 0 0.10rem 1.35rem; /* indent output */
+  /* tuck up under the input cell like MATLAB */
+  margin: 0.05rem 0 0.90rem 0;
+
+  /* slight indent like MATLAB output region */
+  padding: 0.10rem 0 0.10rem 1.15rem;
+
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
 
   font-family: $matlab-mono;
-  font-size: 0.90em;
+  font-size: 0.94em;
   line-height: 1.35;
   white-space: pre;
   overflow-x: auto;
 }
 
-/* IMPORTANT: override JTD’s global `code { font-size: 0.75em; }` */
+/* Override JTD’s global `code { font-size: 0.75em; }` */
 .main-content pre.language-matlabtextoutput > code.language-matlabtextoutput {
   font-family: inherit !important;
   font-size: inherit !important;
@@ -81,13 +90,17 @@ div.language-matlab.highlighter-rouge > button {
   color: inherit;
 }
 
+/* Hide scrollbar chrome (keep scroll functionality) */
 .main-content pre.language-matlabtextoutput {
-  margin-top: -0.15rem;
+  scrollbar-width: none;          // Firefox
+}
+.main-content pre.language-matlabtextoutput::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
-/* Optional: if Just the Docs styles ALL <pre> with a border/background,
-   this ensures the matlabTextOutput stays unboxed. */
-pre.language-matlabtextoutput,
-pre.language-matlabtextoutput code {
+/* Ensure no rounded corners sneak in */
+.main-content pre.language-matlabtextoutput,
+.main-content pre.language-matlabtextoutput code {
   border-radius: 0 !important;
 }
