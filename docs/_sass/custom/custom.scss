@@ -61,9 +61,12 @@ $nav-width: 26rem; // your chosen "max" sidebar width
     width: var(--jtd-sidebar-width);
     min-width: var(--jtd-sidebar-width);
     max-width: var(--jtd-sidebar-width);
-
-    /* THIS is the key for flex layouts */
     flex: 0 0 var(--jtd-sidebar-width);
+  }
+
+  .side-bar .site-nav {
+    width: 100%;
+    max-width: none;
   }
 
   /* Keep main content aligned */
@@ -76,8 +79,6 @@ $nav-width: 26rem; // your chosen "max" sidebar width
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-
-    /* defensive: prevent camelCase breaks */
     word-break: normal;
     overflow-wrap: normal;
   }
