@@ -64,7 +64,9 @@ $nav-width: 26rem; // your chosen "max" sidebar width
     flex: 0 0 var(--jtd-sidebar-width);
   }
 
-  .side-bar .site-nav {
+  .side-bar .site-header,
+  .side-bar .site-nav,
+  .side-bar .site-footer {
     width: 100%;
     max-width: none;
   }
