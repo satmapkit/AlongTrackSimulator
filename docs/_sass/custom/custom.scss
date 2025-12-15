@@ -12,14 +12,14 @@
 
 // _sass/custom/custom.scss
 
-$nav-width: 300px;
+// $nav-width: 300px;
 
-.side-bar {
-  @include mq(lg) {
-    width: $nav-width;
-    min-width: $nav-width;
-  }
-}
+// .side-bar {
+//   @include mq(lg) {
+//     width: $nav-width;
+//     min-width: $nav-width;
+//   }
+// }
 
 // .main{
 //   @include mq(lg) {
@@ -28,5 +28,22 @@ $nav-width: 300px;
 //         max-width: 1920px;
 //   }
 // }
+
+/* Increase usable width inside the sidebar nav without shifting layout */
+.site-header {
+ width: 300px;     /* or 280px / 300px — adjust to taste */
+ max-width: 300px;
+}
+
+.site-nav {
+ width: 300px;     /* or 280px / 300px — adjust to taste */
+ max-width: 300px;
+}
+
+.nav-list .nav-list-link {
+ white-space: nowrap;   /* Prevents the link text from wrapping */
+ overflow: hidden;
+ text-overflow: ellipsis;
+}
 
 @import "./matlab-live-script";
