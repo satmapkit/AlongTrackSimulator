@@ -79,11 +79,11 @@ $nav-width-md: 18rem; // optional; pick something reasonable for md
   }
 }
 
-/* Safety: below md, ensure content isn't offset (prevents overlap) */
-@include mq(md, max) {
-  .side-bar + .main {
-    margin-left: 0;
-  }
-}
+// /* Safety: below md, ensure content isn't offset (prevents overlap) */
+// @include mq(md, max) {
+//   .side-bar + .main {
+//     margin-left: 0;
+//   }
+// }
 
 @import "./matlab-live-script";
