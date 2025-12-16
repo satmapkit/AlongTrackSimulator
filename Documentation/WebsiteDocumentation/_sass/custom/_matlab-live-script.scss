@@ -1,0 +1,127 @@
+/* ============================================================
+   MATLAB Live Script blocks (Just the Docs + Rouge)
+   Aim: match MATLAB exporter look (flatter cell, tighter spacing,
+        indented output, hide copy button for matlab blocks).
+   ============================================================ */
+
+$matlab-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+              "Liberation Mono", "Courier New", monospace;
+
+$matlab-cell-bg: #f5f5f5;      // slightly closer to MATLAB
+$matlab-cell-border: #d0d0d0;
+$matlab-cell-radius: 2px;
+
+/* ---------- MATLAB INPUT (```matlab) ---------- */
+/* Outer wrapper: one flat “cell” */
+.main-content div.language-matlab.highlighter-rouge {
+  margin: 0.50rem 0 0.10rem 0;     // tighter to following output
+  background: $matlab-cell-bg;
+  border: 1px solid $matlab-cell-border;
+  border-radius: $matlab-cell-radius;
+
+  /* MATLAB looks flatter: less padding than before */
+  padding: 0.35rem 0.75rem;
+
+  /* ensure full width */
+  display: block;
+}
+
+/* Remove inner “double box” chrome */
+.main-content div.language-matlab.highlighter-rouge > div.highlight,
+.main-content div.language-matlab.highlighter-rouge pre.highlight {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Code typography */
+.main-content div.language-matlab.highlighter-rouge pre.highlight {
+  font-family: $matlab-mono;
+  font-size: 0.98em;   // MATLAB export reads a touch larger
+  line-height: 1.35;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* Make sure <code> doesn’t shrink due to theme’s global code rule */
+.main-content div.language-matlab.highlighter-rouge pre.highlight > code.language-matlab {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+/* MATLAB exporter has no “copy” affordance — hide it for closer match */
+.main-content div.language-matlab.highlighter-rouge > button {
+  display: none !important;
+}
+
+
+/* ---------- MATLAB TEXT OUTPUT (```matlabTextOutput) ---------- */
+/* In your build, output is a bare <pre><code> (no Rouge wrapper) */
+.main-content pre.language-matlabtextoutput {
+  /* tuck up under the input cell like MATLAB */
+  margin: 0.05rem 0 0.90rem 0;
+
+  /* slight indent like MATLAB output region */
+  padding: 0.10rem 0 0.10rem 1.15rem;
+
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+
+  font-family: $matlab-mono;
+  font-size: 0.94em;
+  line-height: 1.00;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* Override JTD’s global `code { font-size: 0.75em; }` */
+.main-content pre.language-matlabtextoutput > code.language-matlabtextoutput {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+  background: transparent !important;
+  padding: 0 !important;
+  color: inherit;
+}
+
+/* Hide scrollbar chrome (keep scroll functionality) */
+.main-content pre.language-matlabtextoutput {
+  scrollbar-width: none;          // Firefox
+}
+.main-content pre.language-matlabtextoutput::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* Ensure no rounded corners sneak in */
+.main-content pre.language-matlabtextoutput,
+.main-content pre.language-matlabtextoutput code {
+  border-radius: 0 !important;
+}
+
+/* ============================================================
+   FINAL TUNING: match MATLAB Live Script font sizing
+   ============================================================ */
+
+/* MATLAB input cells */
+.main-content div.language-matlab.highlighter-rouge pre.highlight {
+  font-size: 0.86em;   // MATLAB Live Script code is noticeably smaller
+}
+
+/* MATLAB text output */
+.main-content pre.language-matlabtextoutput {
+  font-size: 0.84em;   // output is slightly smaller than input in MATLAB
+}
+
+/* Ensure JTD does not shrink nested <code> further */
+.main-content div.language-matlab.highlighter-rouge pre.highlight > code,
+.main-content pre.language-matlabtextoutput > code {
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
