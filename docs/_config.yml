@@ -1,5 +1,9 @@
 remote_theme: just-the-docs/just-the-docs
 title: AlongTrack Simulator
 description: Ground track simulator for altimetry missions
-compress_html:
-  blanklines: true
+
+markdown: kramdown
+highlighter: rouge
+
+kramdown:
+  syntax_highlighter: rouge
