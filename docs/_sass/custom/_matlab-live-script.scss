@@ -15,7 +15,7 @@ $matlab-cell-radius: 2px;
 /* Outer wrapper: one flat “cell” */
 .main-content div.language-matlab.highlighter-rouge {
   margin: 0.50rem 0 0.10rem 0;     // tighter to following output
-  background: $matlab-cell-bg;
+  // background: $matlab-cell-bg;
   border: 1px solid $matlab-cell-border;
   border-radius: $matlab-cell-radius;
 
@@ -54,10 +54,10 @@ $matlab-cell-radius: 2px;
   padding: 0 !important;
 }
 
-/* MATLAB exporter has no “copy” affordance — hide it for closer match */
-.main-content div.language-matlab.highlighter-rouge > button {
-  display: none !important;
-}
+// /* MATLAB exporter has no “copy” affordance — hide it for closer match */
+// .main-content div.language-matlab.highlighter-rouge > button {
+//   display: none !important;
+// }
 
 
 /* ---------- MATLAB TEXT OUTPUT (```matlabTextOutput) ---------- */
