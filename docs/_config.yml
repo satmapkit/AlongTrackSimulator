@@ -2,8 +2,14 @@ remote_theme: just-the-docs/just-the-docs
 title: AlongTrack Simulator
 description: Ground track simulator for altimetry missions
 
-markdown: kramdown
-highlighter: rouge
+search_enabled: false
 
-kramdown:
-  syntax_highlighter: rouge
+# Aux links for the upper right navigation
+aux_links:
+  "AlongTrackSimulator on GitHub":
+    - "https://github.com/satmapkit/AlongTrackSimulator"
+
+# Makes Aux links open in a new tab. Default is false
+aux_links_new_tab: false
+
+color_scheme: dark
