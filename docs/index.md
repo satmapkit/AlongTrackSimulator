@@ -8,9 +8,13 @@ permalink: /
 
 ## A ground track simulator for satellite altimetry missions
 
-<img src="figure/groundtracks_splash.jpgl" alt="Ground tracks of two satellites for 5 orbital periods" width="300">
+<img src="figure/groundtracks_splash.jpg" alt="Ground tracks of two satellites for 5 orbital periods" width="400">
 
 The AlongTrack Simulator returns the ground track sampling pattern for all of the current and historical altimetry missions. 
+
+- [Install](installation) the Matlab package
+- Read the [Getting Started](getting-started) guide
+- Dive deeper into the [class documentation](classes/alongtracksimulator/)
 
 
 The figure above is reproduced with only a few lines of code,
