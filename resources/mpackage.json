@@ -13,7 +13,13 @@
         "url": "https://github.com/satmapkit/AlongTrackSimulator"
     },
     "folders": [],
-    "dependencies": [],
+    "dependencies": [
+        {
+            "name": "WaveVortexModel",
+            "compatibleVersions": "^4.0",
+            "id": "5b1d512f-b713-471f-9b51-70befc23ccf2"
+        }
+    ],
     "releaseCompatibility": ">=R2024b",
     "schemaVersion": "1.1.0"
 }
