@@ -3,7 +3,7 @@ layout: default
 title: eccentricityForExactRepeatForMission
 parent: AlongTrackSimulator
 grand_parent: Classes
-nav_order: 12
+nav_order: 17
 mathjax: true
 ---
 

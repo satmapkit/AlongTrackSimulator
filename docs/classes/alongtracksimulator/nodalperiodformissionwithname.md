@@ -3,7 +3,7 @@ layout: default
 title: nodalPeriodForMissionWithName
 parent: AlongTrackSimulator
 grand_parent: Classes
-nav_order: 26
+nav_order: 31
 mathjax: true
 ---
 

@@ -3,7 +3,7 @@ layout: default
 title: inclinationForExactRepeatForMission
 parent: AlongTrackSimulator
 grand_parent: Classes
-nav_order: 14
+nav_order: 19
 mathjax: true
 ---
 

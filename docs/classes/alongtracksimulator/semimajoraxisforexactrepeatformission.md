@@ -3,7 +3,7 @@ layout: default
 title: semimajorAxisForExactRepeatForMission
 parent: AlongTrackSimulator
 grand_parent: Classes
-nav_order: 32
+nav_order: 38
 mathjax: true
 ---
 

@@ -77,6 +77,13 @@ Simulate and manipulate satellite along-track ground tracks for altimetry missio
     + [`kepler5`](/AlongTrackSimulator/classes/alongtracksimulator/kepler5.html) Solve Kepler's equation for eccentric anomaly E.
   + Mission catalog
     + [`missionParametersCatalog`](/AlongTrackSimulator/classes/alongtracksimulator/missionparameterscatalog.html) Create a dictionary for satellite altimetry missions
++ Other
+  + [`InverseMeridionalArcPROJ4`](/AlongTrackSimulator/classes/alongtracksimulator/inversemeridionalarcproj4.html) These are the *defined* values for WGS84
+  + [`LatitudeLongitudeBoundsForTransverseMercatorBox`](/AlongTrackSimulator/classes/alongtracksimulator/latitudelongitudeboundsfortransversemercatorbox.html) 
+  + [`LatitudeLongitudeToTransverseMercator`](/AlongTrackSimulator/classes/alongtracksimulator/latitudelongitudetotransversemercator.html) 
+  + [`MeridionalArcPROJ4`](/AlongTrackSimulator/classes/alongtracksimulator/meridionalarcproj4.html) These are the *defined* values for WGS84
+  + [`TransverseMercatorToLatitudeLongitude`](/AlongTrackSimulator/classes/alongtracksimulator/transversemercatortolatitudelongitude.html) 
+  + [`projectedPointsForReferenceOrbit`](/AlongTrackSimulator/classes/alongtracksimulator/projectedpointsforreferenceorbit.html) 
 
 
 ---

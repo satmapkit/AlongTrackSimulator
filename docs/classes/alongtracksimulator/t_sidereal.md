@@ -3,7 +3,7 @@ layout: default
 title: T_sidereal
 parent: AlongTrackSimulator
 grand_parent: Classes
-nav_order: 4
+nav_order: 8
 mathjax: true
 ---
 

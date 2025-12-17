@@ -3,7 +3,7 @@ layout: default
 title: missions
 parent: AlongTrackSimulator
 grand_parent: Classes
-nav_order: 24
+nav_order: 29
 mathjax: true
 ---
 
