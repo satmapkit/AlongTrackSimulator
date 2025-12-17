@@ -6,7 +6,7 @@ on:
       bump:
         description: "Version bump type"
         required: true
-        default: "patch"
+        default: "none"
         type: choice
         options:
           - none
@@ -29,7 +29,7 @@ on:
       shouldPackageForDistribution:
         description: "Package for distribution?"
         required: true
-        default: "true"
+        default: "false"
         type: choice
         options:
           - true

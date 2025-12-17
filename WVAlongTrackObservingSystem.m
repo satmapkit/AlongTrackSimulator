@@ -1,6 +1,10 @@
 classdef WVAlongTrackObservingSystem < WVObservingSystem
-    %UNTITLED2 Summary of this class goes here
-    %   Detailed explanation goes here
+    % An model observing system for along track data
+    %
+    % The observing system is automatically added when a
+    % WVModelOutputGroupAlongTrack is added 
+    %
+    % - Declaration: classdef WVAlongTrackObservingSystem < WVObservingSystem
     properties (WeakHandle)
         alongTrackGroup WVModelOutputGroupAlongTrack
     end
@@ -9,8 +13,9 @@ classdef WVAlongTrackObservingSystem < WVObservingSystem
         function self = WVAlongTrackObservingSystem(model,alongTrackGroup)
             %create a new along track observing system
             %
-            % This class is intended to be subclassed, so it generally
-            % assumed that this initialization will not be called directly.
+            % This class is initialized when a
+            % `WVModelOutputGroupAlongTrack` is initialized, and thus does
+            % not need to be initialized directly.
             %
             % - Topic: Initialization
             % - Declaration: self = WVAlongTrackObservingSystem(model,alongTrackGroup)

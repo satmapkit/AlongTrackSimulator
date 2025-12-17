@@ -25,8 +25,8 @@ end
 websiteRootURL = "AlongTrackSimulator/";
 classFolderName = 'Class documentation';
 websiteFolder = 'classes';
-excludedSuperclasses = {'handle'};
-classes = {'AlongTrackSimulator','WVAlongTrackObservingSystem','WVModelOutputGroupAlongTrack','WVModelOutputGroupAlongTrackRepeatCycle'};
+excludedSuperclasses = {'handle','WVObservingSystem','WVModelOutputGroup'};
+classes = {'AlongTrackSimulator','WVAlongTrackObservingSystem','WVModelOutputGroupAlongTrack'};
 classDocumentation = ClassDocumentation.empty(length(classes),0);
 for iName=1:length(classes)
     classDocumentation(iName) = ClassDocumentation(classes{iName},nav_order=iName,websiteRootURL=websiteRootURL,buildFolder=buildFolder,websiteFolder=websiteFolder,parent=classFolderName,excludedSuperclasses=excludedSuperclasses);

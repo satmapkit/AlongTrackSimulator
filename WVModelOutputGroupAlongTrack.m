@@ -1,7 +1,27 @@
 classdef WVModelOutputGroupAlongTrack < WVModelOutputGroup
-    %UNTITLED Summary of this class goes here
-    %   Detailed explanation goes here
-
+    % An model output group for along track data
+    %
+    % WVModelOutputGroupAlongTrack hold onto to output from a single
+    % satellite altimetry mission. Typical usage involves,
+    % 1. initializing an output file
+    % 2. initializing the AlongTrackSimulator, 
+    % 3. adding the missions of interest.
+    % 
+    %
+    % The following code adds output groups for all current satellites 
+    % ```matlab
+    % outputFile = model.createNetCDFFileForModelOutput('ModelOutput.nc',outputInterval=86400);
+    % ats = AlongTrackSimulator();
+    % currentMissions = ats.currentMissions;
+    % for iMission = 1:length(currentMissions)
+    %     outputFile.addOutputGroup(WVModelOutputGroupAlongTrack(model,currentMissions(iMission),ats));
+    % end
+    % ```
+    %
+    % Upon initialization of the output group, a
+    % WVAlongTrackObservingSystem will be added to the model.
+    %
+    % - Declaration: classdef WVModelOutputGroupAlongTrack < WVModelOutputGroup
     properties
         missionName
         ats
