@@ -1,14 +1,17 @@
 classdef WVModelOutputGroupAlongTrack < WVModelOutputGroup
-    % An model output group for along track data
+    % Represent WaveVortexModel output for satellite along-track sampling.
     %
-    % WVModelOutputGroupAlongTrack hold onto to output from a single
-    % satellite altimetry mission. Typical usage involves,
-    % 1. initializing an output file
-    % 2. initializing the AlongTrackSimulator, 
-    % 3. adding the missions of interest.
-    % 
+    % WVModelOutputGroupAlongTrack manages the time sampling and NetCDF output for a
+    % single satellite altimetry mission using an AlongTrackSimulator. The group
+    % precomputes mission pass-overs through the model domain and, when the model
+    % reaches a pass-over time, writes the full along-track sample sequence for that
+    % pass-over into the corresponding NetCDF group.
     %
-    % The following code adds output groups for all current satellites 
+    % Typical usage:
+    % - Create a WVModel NetCDF output file and initialize an AlongTrackSimulator.
+    % - Construct one WVModelOutputGroupAlongTrack per mission and attach it to the output file.
+    %
+    % The following code adds output groups for all current satellites
     % ```matlab
     % outputFile = model.createNetCDFFileForModelOutput('ModelOutput.nc',outputInterval=86400);
     % ats = AlongTrackSimulator();
@@ -18,21 +21,74 @@ classdef WVModelOutputGroupAlongTrack < WVModelOutputGroup
     % end
     % ```
     %
-    % Upon initialization of the output group, a
-    % WVAlongTrackObservingSystem will be added to the model.
+    % Major responsibilities:
+    % - Store mission metadata and repeat-cycle information.
+    % - Determine pass-over output times for a model integration window.
+    % - Write the complete along-track time series for each pass-over into NetCDF.
+    % - Provide class annotation metadata for property introspection.
+    %
+    % - Topic: Initialization
+    % - Topic: Mission metadata
+    % - Topic: Output scheduling
+    % - Topic: NetCDF output
+    % - Topic: Class annotations
     %
     % - Declaration: classdef WVModelOutputGroupAlongTrack < WVModelOutputGroup
     properties
+        % Mission identifier used to configure the along-track sampling.
+        %
+        % Key used with the AlongTrackSimulator mission catalog (e.g., "s6a").
+        %
+        % - Topic: Mission metadata
         missionName
+
+        % AlongTrackSimulator used to compute and project mission ground tracks.
+        %
+        % The simulator defines the orbit geometry and provides methods that project
+        % latitude/longitude into the model's local Cartesian domain.
+        %
+        % - Topic: Mission metadata
         ats
 
+        % Mission repeat cycle (s).
+        %
+        % For repeating missions this is the repeat-cycle duration in seconds. For
+        % non-repeating missions this is Inf.
+        %
+        % - Topic: Mission metadata
         repeatCycle
+
+        % Pass-over tracks through the model domain.
+        %
+        % Cell array of structs with fields x, y, and t, containing the projected
+        % along-track coordinates (m) and model times (s) for each pass-over.
+        %
+        % - Topic: Output scheduling
         tracks
-        firstPassoverTime        
+
+        % Model time of first sample for each pass-over (s).
+        %
+        % Column vector of the first time stamp in each element of tracks. This is
+        % used to determine when the model should stop to write an along-track pass-over.
+        %
+        % - Topic: Output scheduling
+        firstPassoverTime
     end
 
     methods
         function self = WVModelOutputGroupAlongTrack(model,missionName,ats)
+            % Create an along-track output group for a satellite mission.
+            %
+            % Initializes the output group and precomputes projected along-track pass-overs through
+            % the model domain for repeat-cycle missions. The resulting tracks and first-passover
+            % times are used to schedule output and to write pass-over samples into NetCDF.
+            %
+            % - Topic: Initialization
+            % - Declaration: self = WVModelOutputGroupAlongTrack(model,missionName,ats)
+            % - Parameter model: WVModel scalar — parent model instance providing domain geometry and output file context
+            % - Parameter missionName: text scalar — mission key used by AlongTrackSimulator
+            % - Parameter ats: AlongTrackSimulator scalar — simulator used to compute and project tracks into the model domain
+            % - Returns self: WVModelOutputGroupAlongTrack instance
             arguments
                 model WVModel
                 missionName {mustBeText}
@@ -58,6 +114,18 @@ classdef WVModelOutputGroupAlongTrack < WVModelOutputGroup
         end
 
         function aString = description(self)
+            % Describe the sampling pattern represented by this output group.
+            %
+            % Returns a concise, human-readable description string including repeat-cycle information
+            % when the mission is configured as a repeat mission.
+            %
+            % - Topic: Mission metadata
+            % - Declaration: aString = description()
+            % - Returns aString: string scalar — description of mission sampling pattern
+            arguments
+                self WVModelOutputGroupAlongTrack
+            end
+            
             if ~isinf(self.repeatCycle)
                 aString = "Sampling pattern for the " + self.missionName + " mission with a repeat cycle of " + string(self.repeatCycle) + "s.";
             else
@@ -66,6 +134,17 @@ classdef WVModelOutputGroupAlongTrack < WVModelOutputGroup
         end
 
         function t = outputTimesForIntegrationPeriod(self,initialTime,finalTime)
+            % Return output times within an integration window.
+            %
+            % For repeat-cycle missions, returns one time per repeat cycle corresponding to the first
+            % sample of the pass-over through the model domain. For non-repeating missions, computes
+            % pass-overs over [initialTime, finalTime] and returns the first sample time for each.
+            %
+            % - Topic: Output scheduling
+            % - Declaration: t = outputTimesForIntegrationPeriod(initialTime,finalTime)
+            % - Parameter initialTime: double scalar — integration window start time (s)
+            % - Parameter finalTime: double scalar — integration window end time (s)
+            % - Returns t: double column vector — pass-over trigger times within the integration window (s)
             arguments (Input)
                 self WVModelOutputGroup
                 initialTime (1,1) double
@@ -98,13 +177,26 @@ classdef WVModelOutputGroupAlongTrack < WVModelOutputGroup
             end
         end
 
-        function writeTimeStepToNetCDFFile(self,t)
-            % Override the behavior of the superclass.
-            % When we reach a time point where the model stops, we will
-            % actually write all the time points for the passover. The
-            % incrementsWrittenToGroup will accurately reflect the length
-            % of the time dimension, but timeOfLastIncrementWrittenToGroup
-            % will be the time at which the model stopped.
+        function writeTimeStepToNetCDFFile(self,ncfile,t)
+            % Write a model time step to the NetCDF output group.
+            %
+            % Overrides the WVModelOutputGroup behavior. When the model reaches a scheduled pass-over
+            % time, this method writes the complete along-track time series for that pass-over into
+            % the NetCDF group. The group time dimension and bookkeeping counters are advanced by the
+            % number of samples written, while the model stop time remains the triggering time.
+            %
+            % - Topic: NetCDF output
+            % - Declaration: writeTimeStepToNetCDFFile(t)
+            % - Parameter ncfile: NetCDFFile — netcdf file being written to
+            % - Parameter t: double scalar — model time at which output is triggered (s)
+            arguments
+                self WVModelOutputGroup
+                ncfile NetCDFFile
+                t double
+            end
+            if ~self.didInitializeStorage
+                self.initializeOutputGroup(ncfile);
+            end
             if ( ~isempty(self.group) && t > self.timeOfLastIncrementWrittenToGroup )
                 if ~isinf(self.repeatCycle)
                     iPassover = find( abs(self.firstPassoverTime - mod(t,self.repeatCycle)) < 1, 1, 'first');
@@ -132,10 +224,26 @@ classdef WVModelOutputGroupAlongTrack < WVModelOutputGroup
     methods (Static)
 
         function vars = classRequiredPropertyNames()
+            % Return names of required properties for this class.
+            %
+            % Provides the list of properties that must be present for a valid output group instance
+            % in workflows that perform validation or serialization.
+            %
+            % - Topic: Class annotations
+            % - Declaration: vars = classRequiredPropertyNames()
+            % - Returns vars: cell row vector of char — required property names
             vars = {'missionName','name','repeatCycle'};
         end
 
         function propertyAnnotations = classDefinedPropertyAnnotations()
+            % Define class property annotations for introspection and UI layers.
+            %
+            % Returns an array of CAPropertyAnnotation objects describing key properties, their units,
+            % and semantic meaning for downstream tooling.
+            %
+            % - Topic: Class annotations
+            % - Declaration: propertyAnnotations = classDefinedPropertyAnnotations()
+            % - Returns propertyAnnotations: CAPropertyAnnotation vector — property annotation objects
             arguments (Output)
                 propertyAnnotations CAPropertyAnnotation
             end
@@ -147,7 +255,23 @@ classdef WVModelOutputGroupAlongTrack < WVModelOutputGroup
         end
 
         function tracks = convertTrackVectorToPassoverCellArray(alongtrack)
+            % Convert a track time series into a cell array of pass-overs.
+            %
+            % Splits a continuous along-track struct (with fields t, x, y) into individual pass-overs
+            % using gaps in time. Each output cell contains a struct with fields x, y, and t.
+            %
+            % - Topic: Output scheduling
+            % - Declaration: tracks = convertTrackVectorToPassoverCellArray(alongtrack)
+            % - Parameter alongtrack: struct — input track with fields:
+            %   - t: double vector — model time stamps (s)
+            %   - x: double vector — projected x coordinate (m)
+            %   - y: double vector — projected y coordinate (m)
+            % - Returns tracks: cell column vector — pass-over structs with fields x, y, t
             % alongtrack is a struct with fields (t,x,y)
+            arguments
+                alongtrack (1,1) struct
+            end
+            
             trackIndices = find(diff(alongtrack.t)>1);
             trackIndices(end+1) = length(alongtrack.t);
             startIndex = 1;
