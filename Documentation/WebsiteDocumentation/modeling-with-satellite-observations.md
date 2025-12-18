@@ -61,3 +61,20 @@ figure, pcolor(wvt.x/1e3,wvt.y/1e3,wvt.ssh.'), shading interp, axis equal
 ```
 
 ![figure_1.png](./figures/modeling-tutorial/figure_1.png)
+
+## Visualizing the satellite observations
+
+Using the NetCDF output file, we can use a [script to make a movie](./downloads/QGMonopoleWithAlongTrackSamplingMovie.m) that shows the evolution of the eddy, and different combinations of satellite observations of that eddy.
+
+<video
+  controls
+  preload="metadata"
+  style="max-width: 100%; height: auto;">
+  <source src="./figures/modeling-tutorial/QGMonopoleSatelliteObservations.mp4" type="video/mp4">
+  Your browser does not support the HTML5 video tag.
+</video>
+
+- The panel in the upper-left shows daily snapshots the sea-surface of the entire domain as the eddy propagates westward.
+- The upper-right panel shows how the *reference mission*, Sentinel 6a, samples the eddy. For visualization purposes, we fade in the observations 4 days prior, and fade out 4 days after. In practice, the satellite passes over in a few minutes.
+- The lower-left panel shows the combined *reference and interleaved missions*. The interleaved mission is on the same orbital as the reference mission, just shifted so the tracks create a staggered grid.
+- The lower-right panel shows all the current missions. These include satellites with other orbits, including geodetic and drifting orbits.
