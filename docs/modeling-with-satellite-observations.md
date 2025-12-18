@@ -65,10 +65,10 @@ figure, pcolor(wvt.x/1e3,wvt.y/1e3,wvt.ssh.'), shading interp, axis equal
 ## Visualizing the satellite observations
 
 Using the NetCDF output file, we can use a [script to make a movie](./downloads/QGMonopoleWithAlongTrackSamplingMovie.m) that shows the evolution of the eddy, and different combinations of satellite observations of that eddy.
-
 <video
   controls
   preload="metadata"
+  poster="./figures/modeling-tutorial/t-001.png"
   style="max-width: 100%; height: auto;">
   <source src="./figures/modeling-tutorial/QGMonopoleSatelliteObservations.mp4" type="video/mp4">
   Your browser does not support the HTML5 video tag.
