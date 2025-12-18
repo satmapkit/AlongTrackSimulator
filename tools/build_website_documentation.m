@@ -25,7 +25,7 @@ end
 websiteRootURL = "AlongTrackSimulator/";
 classFolderName = 'Class documentation';
 websiteFolder = 'classes';
-excludedSuperclasses = {'handle','WVObservingSystem','WVModelOutputGroup'};
+excludedSuperclasses = {'handle','WVObservingSystem','WVModelOutputGroup', 'matlab.mixin.Heterogeneous', 'CAAnnotatedClass'};
 classes = {'AlongTrackSimulator','WVAlongTrackObservingSystem','WVModelOutputGroupAlongTrack'};
 classDocumentation = ClassDocumentation.empty(length(classes),0);
 for iName=1:length(classes)

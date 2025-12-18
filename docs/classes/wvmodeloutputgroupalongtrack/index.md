@@ -64,28 +64,7 @@ Represent WaveVortexModel output for satellite along-track sampling.
   + [`firstPassoverTime`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/firstpassovertime.html) Model time of first sample for each pass-over (s).
   + [`tracks`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/tracks.html) Pass-over tracks through the model domain.
 + Class annotations
-  + [`classDefinedPropertyAnnotations`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/classdefinedpropertyannotations.html) Define class property annotations for introspection and UI layers.
   + [`classRequiredPropertyNames`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/classrequiredpropertynames.html) Return names of required properties for this class.
-+ Other
-  + [`addPropertyAnnotation`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/addpropertyannotation.html) 
-  + [`annotatedClassFromFile`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/annotatedclassfromfile.html) 
-  + [`annotatedClassFromGroup`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/annotatedclassfromgroup.html) 
-  + [`annotatedDimensionNames`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/annotateddimensionnames.html) 
-  + [`annotatedPropertyNames`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/annotatedpropertynames.html) 
-  + [`canInitializeDirectlyFromGroup`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/caninitializedirectlyfromgroup.html) 
-  + [`dimensionAnnotationWithName`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/dimensionannotationwithname.html) 
-  + [`dimensionAnnotations`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/dimensionannotations.html) 
-  + [`isequal`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/isequal.html) 
-  + [`propertyAnnotationWithName`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/propertyannotationwithname.html) 
-  + [`propertyAnnotations`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/propertyannotations.html) 
-  + [`propertyValuesFromGroup`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/propertyvaluesfromgroup.html) 
-  + [`removePropertyAnnotation`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/removepropertyannotation.html) 
-  + [`requiredProperties`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/requiredproperties.html) 
-  + [`requiredPropertiesFromGroup`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/requiredpropertiesfromgroup.html) 
-  + [`throwErrorIfMissingProperties`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/throwerrorifmissingproperties.html) 
-  + [`writeToFile`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/writetofile.html) 
-  + [`writeToGroup`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/writetogroup.html) 
-  + [`writeToPath`](/AlongTrackSimulator/classes/wvmodeloutputgroupalongtrack/writetopath.html) 
 
 
 ---

@@ -3,7 +3,7 @@ layout: default
 title: observingSystemWithResolutionOfTransform
 parent: WVAlongTrackObservingSystem
 grand_parent: Classes
-nav_order: 13
+nav_order: 3
 mathjax: true
 ---
 

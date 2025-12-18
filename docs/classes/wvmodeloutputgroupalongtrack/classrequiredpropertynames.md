@@ -3,7 +3,7 @@ layout: default
 title: classRequiredPropertyNames
 parent: WVModelOutputGroupAlongTrack
 grand_parent: Classes
-nav_order: 10
+nav_order: 3
 mathjax: true
 ---
 
