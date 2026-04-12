@@ -14,6 +14,9 @@ Mission repeat cycle (s).
 
 ---
 
+## Description
+Real valued property with no dimensions and units of $$s$$.
+
 ## Discussion
 
   For repeating missions this is the repeat-cycle duration in seconds. For

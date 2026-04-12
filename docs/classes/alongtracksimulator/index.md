@@ -21,12 +21,12 @@ Simulate and manipulate satellite along-track ground tracks for altimetry missio
 
 ## Overview
  
-  AlongTrackSimulator provides utilities to compute orbit ground tracks (optionally with
-  nodal precession), enforce exact repeat cycles for supported missions, and project
-  tracks into a local Cartesian box for along-track sampling and modeling workflows.
+AlongTrackSimulator provides utilities to compute orbit ground tracks (optionally with
+nodal precession), enforce exact repeat cycles for supported missions, and project
+tracks into a local Cartesian box for along-track sampling and modeling workflows.
  
-                         
-  
+                       
+
 
 
 ## Topics

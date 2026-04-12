@@ -21,10 +21,10 @@ An model observing system for along track data
 
 ## Overview
  
-  The observing system is automatically added when a
-  WVModelOutputGroupAlongTrack is added 
+The observing system is automatically added when a
+WVModelOutputGroupAlongTrack is added 
  
-  
+
 
 
 ## Topics

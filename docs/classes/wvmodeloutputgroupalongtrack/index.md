@@ -21,34 +21,34 @@ Represent WaveVortexModel output for satellite along-track sampling.
 
 ## Overview
  
-  WVModelOutputGroupAlongTrack manages the time sampling and NetCDF output for a
-  single satellite altimetry mission using an AlongTrackSimulator. The group
-  precomputes mission pass-overs through the model domain and, when the model
-  reaches a pass-over time, writes the full along-track sample sequence for that
-  pass-over into the corresponding NetCDF group.
+WVModelOutputGroupAlongTrack manages the time sampling and NetCDF output for a
+single satellite altimetry mission using an AlongTrackSimulator. The group
+precomputes mission pass-overs through the model domain and, when the model
+reaches a pass-over time, writes the full along-track sample sequence for that
+pass-over into the corresponding NetCDF group.
  
-  Typical usage:
-  - Create a WVModel NetCDF output file and initialize an AlongTrackSimulator.
-  - Construct one WVModelOutputGroupAlongTrack per mission and attach it to the output file.
+Typical usage:
+- Create a WVModel NetCDF output file and initialize an AlongTrackSimulator.
+- Construct one WVModelOutputGroupAlongTrack per mission and attach it to the output file.
  
-  The following code adds output groups for all current satellites
-  ```matlab
-  outputFile = model.createNetCDFFileForModelOutput('ModelOutput.nc',outputInterval=86400);
-  ats = AlongTrackSimulator();
-  currentMissions = ats.currentMissions;
-  for iMission = 1:length(currentMissions)
-      outputFile.addOutputGroup(WVModelOutputGroupAlongTrack(model,currentMissions(iMission),ats));
-  end
-  ```
+The following code adds output groups for all current satellites
+```matlab
+outputFile = model.createNetCDFFileForModelOutput('ModelOutput.nc',outputInterval=86400);
+ats = AlongTrackSimulator();
+currentMissions = ats.currentMissions;
+for iMission = 1:length(currentMissions)
+    outputFile.addOutputGroup(WVModelOutputGroupAlongTrack(model,currentMissions(iMission),ats));
+end
+```
  
-  Major responsibilities:
-  - Store mission metadata and repeat-cycle information.
-  - Determine pass-over output times for a model integration window.
-  - Write the complete along-track time series for each pass-over into NetCDF.
-  - Provide class annotation metadata for property introspection.
+Major responsibilities:
+- Store mission metadata and repeat-cycle information.
+- Determine pass-over output times for a model integration window.
+- Write the complete along-track time series for each pass-over into NetCDF.
+- Provide class annotation metadata for property introspection.
  
-           
-  
+         
+
 
 
 ## Topics

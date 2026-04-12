@@ -14,3 +14,6 @@ mathjax: true
 
 ---
 
+## Type
++ Class: `WVModelOutputGroupAlongTrack`
+
