@@ -34,10 +34,7 @@ model = WVModel(wvt);
 outputFile = model.createNetCDFFileForModelOutput('QGMonopoleWithAlongTrack.nc',outputInterval=86400,shouldOverwriteExisting=1);
 model.addNetCDFOutputVariables("ssh","zeta_z")
 ats = AlongTrackSimulator();
-currentMissions = ats.currentMissions;
-for iMission = 1:length(currentMissions)
-    outputFile.addOutputGroup(WVModelOutputGroupAlongTrack(model,currentMissions(iMission),ats));
-end
+ats.addMissionsToOutputFile(outputFile);
 
 
 %%

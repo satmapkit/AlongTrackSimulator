@@ -46,11 +46,18 @@ classdef WVAlongTrackObservingSystem < WVObservingSystem
                 group.addVariable(strcat("track",'_',spatialDimensionNames{iVar}),{"t"},type="double",attributes=attributes,isComplex=false);
             end
 
-            varAnnotation = self.model.wvt.propertyAnnotationWithName("ssh");
-            attributes = containers.Map(KeyType='char',ValueType='any');
-            attributes('units') = varAnnotation.units;
-            attributes('long_name') = strcat(varAnnotation.description,', as observed by a nadir altimeter.');
-            group.addVariable("ssh",{'t'},type="double",attributes=attributes,isComplex=false);
+            for iField = 1:length(self.alongTrackGroup.fieldNames)
+                fieldName = self.alongTrackGroup.fieldNames(iField);
+                varAnnotation = self.model.wvt.propertyAnnotationWithName(fieldName);
+                attributes = containers.Map(KeyType='char',ValueType='any');
+                annotationAttributeNames = varAnnotation.attributes.keys;
+                for iAttribute = 1:length(annotationAttributeNames)
+                    attributes(annotationAttributeNames{iAttribute}) = varAnnotation.attributes(annotationAttributeNames{iAttribute});
+                end
+                attributes('units') = varAnnotation.units;
+                attributes('long_name') = string(varAnnotation.description) + ", sampled along the " + string(self.alongTrackGroup.missionName) + " mission ground track.";
+                group.addVariable(fieldName,{'t'},type="double",attributes=attributes,isComplex=false);
+            end
         end
 
         function writeTimeStepToFile(self,group,outputIndices)
@@ -62,8 +69,13 @@ classdef WVAlongTrackObservingSystem < WVObservingSystem
             tracks = self.alongTrackGroup.tracks;
             group.variableWithName("track_x").setValueAlongDimensionAtIndex(tracks{iPassover}.x,'t',outputIndices);
             group.variableWithName("track_y").setValueAlongDimensionAtIndex(tracks{iPassover}.y,'t',outputIndices);
-            ssh = reshape(self.model.wvt.variableAtPositionWithName(tracks{iPassover}.x,tracks{iPassover}.y,[],'ssh'),[],1);
-            group.variableWithName("ssh").setValueAlongDimensionAtIndex(ssh,'t',outputIndices);
+            fieldNames = cellstr(self.alongTrackGroup.fieldNames);
+            fieldValues = cell(size(fieldNames));
+            [fieldValues{:}] = self.model.wvt.variableAtPositionWithName(tracks{iPassover}.x,tracks{iPassover}.y,[],fieldNames{:});
+            for iField = 1:length(fieldNames)
+                values = reshape(fieldValues{iField},[],1);
+                group.variableWithName(fieldNames{iField}).setValueAlongDimensionAtIndex(values,'t',outputIndices);
+            end
         end
 
         function os = observingSystemWithResolutionOfTransform(self,wvtX2)

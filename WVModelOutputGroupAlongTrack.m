@@ -9,16 +9,13 @@ classdef WVModelOutputGroupAlongTrack < WVModelOutputGroup
     %
     % Typical usage:
     % - Create a WVModel NetCDF output file and initialize an AlongTrackSimulator.
-    % - Construct one WVModelOutputGroupAlongTrack per mission and attach it to the output file.
+    % - Add the requested missions and registered horizontal fields to the output file.
     %
     % The following code adds output groups for all current satellites
     % ```matlab
     % outputFile = model.createNetCDFFileForModelOutput('ModelOutput.nc',outputInterval=86400);
     % ats = AlongTrackSimulator();
-    % currentMissions = ats.currentMissions;
-    % for iMission = 1:length(currentMissions)
-    %     outputFile.addOutputGroup(WVModelOutputGroupAlongTrack(model,currentMissions(iMission),ats));
-    % end
+    % ats.addMissionsToOutputFile(outputFile,fieldNames=["ssh","ssu","ssv"]);
     % ```
     %
     % Major responsibilities:
@@ -75,28 +72,59 @@ classdef WVModelOutputGroupAlongTrack < WVModelOutputGroup
         firstPassoverTime
     end
 
+    properties (SetAccess=private)
+        % Registered horizontal WaveVortexModel fields sampled along track.
+        %
+        % Each field must be registered with the transform and have dimensions
+        % `{'x','y'}`. The default is `"ssh"`.
+        %
+        % - Topic: Mission metadata
+        fieldNames (1,:) string
+    end
+
     methods
-        function self = WVModelOutputGroupAlongTrack(model,missionName,ats)
+        function self = WVModelOutputGroupAlongTrack(model,missionName,ats,options)
             % Create an along-track output group for a satellite mission.
             %
             % Initializes the output group and precomputes projected along-track pass-overs through
             % the model domain for repeat-cycle missions. The resulting tracks and first-passover
-            % times are used to schedule output and to write pass-over samples into NetCDF.
+            % times are used to schedule output and to write pass-over samples into NetCDF. Each
+            % requested field must be a registered two-dimensional WaveVortexModel variable with
+            % dimensions `{'x','y'}`.
             %
             % - Topic: Initialization
-            % - Declaration: self = WVModelOutputGroupAlongTrack(model,missionName,ats)
+            % - Declaration: self = WVModelOutputGroupAlongTrack(model,missionName,ats,options)
             % - Parameter model: WVModel scalar — parent model instance providing domain geometry and output file context
             % - Parameter missionName: text scalar — mission key used by AlongTrackSimulator
             % - Parameter ats: AlongTrackSimulator scalar — simulator used to compute and project tracks into the model domain
+            % - Parameter options.fieldNames: string array — registered horizontal fields to sample; default `"ssh"`
             % - Returns self: WVModelOutputGroupAlongTrack instance
             arguments
                 model WVModel
                 missionName {mustBeText}
                 ats AlongTrackSimulator
+                options.fieldNames string = "ssh"
+            end
+            fieldNames = reshape(options.fieldNames,1,[]);
+            if isempty(fieldNames)
+                error("WVModelOutputGroupAlongTrack:EmptyFieldNames","fieldNames must contain at least one registered horizontal WaveVortexModel variable.");
+            end
+            if numel(unique(fieldNames)) ~= numel(fieldNames)
+                error("WVModelOutputGroupAlongTrack:DuplicateFieldNames","fieldNames must not contain duplicate variable names.");
+            end
+            for iField = 1:length(fieldNames)
+                if ~model.wvt.hasVariableWithName(char(fieldNames(iField)))
+                    error("WVModelOutputGroupAlongTrack:UnknownField","The WaveVortexModel transform does not have a registered variable named '%s'.",fieldNames(iField));
+                end
+                annotation = model.wvt.propertyAnnotationWithName(fieldNames(iField));
+                if ~isequal(annotation.dimensions,{'x','y'})
+                    error("WVModelOutputGroupAlongTrack:InvalidFieldDimensions","The variable '%s' has dimensions {%s}; along-track fields must have dimensions {'x','y'}.",fieldNames(iField),strjoin(string(annotation.dimensions),", "));
+                end
             end
             self@WVModelOutputGroup(model,name=missionName);
             self.missionName = missionName;
             self.ats = ats;
+            self.fieldNames = fieldNames;
             self.repeatCycle = ats.repeatCycleForMissionWithName(missionName);
 
             if ~isinf(self.repeatCycle)
@@ -250,6 +278,7 @@ classdef WVModelOutputGroupAlongTrack < WVModelOutputGroup
             propertyAnnotations = CAPropertyAnnotation.empty(0,0);
             propertyAnnotations(end+1) = CAPropertyAnnotation('missionName','name the mission');
             propertyAnnotations(end+1) = CAPropertyAnnotation('name','name of output group');
+            propertyAnnotations(end+1) = CAPropertyAnnotation('fieldNames','registered horizontal fields sampled along track');
             propertyAnnotations(end+1) = CANumericProperty('repeatCycle', {}, 's','orbital repeat cycle (Inf indicates that the orbit is non-repeat)');
             % propertyAnnotations(end+1) = CANumericProperty('firstPassoverTime', {}, 's','model time of first passover into the model domain');
         end

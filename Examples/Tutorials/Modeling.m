@@ -60,9 +60,7 @@ model.addNetCDFOutputVariables("ssh", "zeta_z");
 
 ats = AlongTrackSimulator();
 currentMissions = ats.currentMissions;
-for iMission = 1:length(currentMissions)
-    outputFile.addOutputGroup(WVModelOutputGroupAlongTrack(model, currentMissions(iMission), ats));
-end
+ats.addMissionsToOutputFile(outputFile, missionNames=currentMissions);
 
 %% Integrate for one year
 % This gives the eddy time to translate westward while the repeat and

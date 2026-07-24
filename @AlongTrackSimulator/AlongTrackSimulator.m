@@ -258,6 +258,48 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             disp(T);
         end
 
+        function outputGroups = addMissionsToOutputFile(self,outputFile,options)
+            % Add along-track output groups for one or more missions.
+            %
+            % By default this method adds every mission returned by `currentMissions` and
+            % samples sea-surface height. Supply any registered WaveVortexModel variables
+            % with dimensions `{'x','y'}` through `fieldNames`.
+            %
+            % ```matlab
+            % fields = ["ssh","ssu","ssv"];
+            % outputGroups = ats.addMissionsToOutputFile(outputFile,fieldNames=fields);
+            % ```
+            %
+            % - Topic: Utilities — WaveVortexModel integration
+            % - Declaration: outputGroups = addMissionsToOutputFile(outputFile,options)
+            % - Parameter outputFile: WVModelOutputFile scalar — output file receiving the mission groups
+            % - Parameter options.missionNames: string array — mission keys; default is every current mission
+            % - Parameter options.fieldNames: string array — registered horizontal fields to sample; default `"ssh"`
+            % - Returns outputGroups: WVModelOutputGroupAlongTrack row vector — groups added to the output file
+            arguments
+                self AlongTrackSimulator
+                outputFile WVModelOutputFile
+                options.missionNames string
+                options.fieldNames string = "ssh"
+            end
+            if isfield(options,"missionNames")
+                missionNames = reshape(options.missionNames,1,[]);
+            else
+                missionNames = reshape(self.currentMissions,1,[]);
+            end
+            outputGroupCells = cell(1,length(missionNames));
+            for iMission = 1:length(missionNames)
+                outputGroup = WVModelOutputGroupAlongTrack(outputFile.model,missionNames(iMission),self,fieldNames=options.fieldNames);
+                outputFile.addOutputGroup(outputGroup);
+                outputGroupCells{iMission} = outputGroup;
+            end
+            if isempty(outputGroupCells)
+                outputGroups = WVModelOutputGroupAlongTrack.empty(1,0);
+            else
+                outputGroups = [outputGroupCells{:}];
+            end
+        end
+
         function alongtrack = projectedPointsForMissionWithName(self,missionName,requiredOptions,options)
             % Project mission ground-track points into a local Transverse Mercator box.
             %
@@ -416,42 +458,24 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
 
         T_nodal = computeNodalPeriod(a, e, i)
 
-        function outputGroup = wvmOutputGroupForRepeatMissionWithName(model, missionName)
+        function outputGroup = wvmOutputGroupForRepeatMissionWithName(model,missionName,options)
             % Build a WaveVortexModel output group for an along-track sampling pattern.
             %
-            % Convenience function that uses the model's domain (wvt.Lx/Ly and latitude)
-            % to generate repeat-cycle projected track points.
+            % This compatibility helper delegates to `WVModelOutputGroupAlongTrack`.
             %
             % - Topic: Utilities — WaveVortexModel integration
-            % - Declaration: outputGroup = wvmOutputGroupForRepeatMissionWithName(model, missionName)
+            % - Declaration: outputGroup = wvmOutputGroupForRepeatMissionWithName(model,missionName,options)
             % - Parameter model: WVModel
             % - Parameter missionName: string — mission key
-            % - Returns outputGroup: WVModelOutputGroup
+            % - Parameter options.fieldNames: string array — registered horizontal fields to sample; default `"ssh"`
+            % - Returns outputGroup: WVModelOutputGroupAlongTrack
             arguments
                 model WVModel
                 missionName string
+                options.fieldNames string = "ssh"
             end
             ats = AlongTrackSimulator();
-            wvt = model.wvt;
-            alongtrack = ats.projectedPointsForRepeatMissionWithName(missionName,Lx=wvt.Lx,Ly=wvt.Ly,lat0=wvt.latitude,lon0=0);
-
-            trackIndices = find(diff(alongtrack.t)>1);
-            trackIndices(end+1) = length(alongtrack.t);
-            startIndex = 1;
-            tracks = cell(length(trackIndices),1);
-            for i=1:length(trackIndices)
-                endIndex = trackIndices(i);
-                tracks{i}.x = alongtrack.x(startIndex:endIndex);
-                tracks{i}.y = alongtrack.y(startIndex:endIndex);
-                tracks{i}.t = alongtrack.t(startIndex:endIndex);
-                startIndex = endIndex+1;
-            end
-            % figure
-            % for iPassover=1:length(tracks)
-            %     scatter(tracks{iPassover}.x/1e3,tracks{iPassover}.y/1e3), hold on
-            % end
-            repeatCycle = ats.repeatCycleForMissionWithName(missionName);
-            outputGroup = WVModelOutputGroupAlongTrackRepeatCycle(model,missionName,tracks,repeatCycle);
+            outputGroup = WVModelOutputGroupAlongTrack(model,missionName,ats,fieldNames=options.fieldNames);
         end
 
         % function addObservingSystemToModelForRepeatMissionWithName(model, missionName)

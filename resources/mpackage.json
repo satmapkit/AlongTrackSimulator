@@ -1,6 +1,6 @@
 {
     "name": "AlongTrackSimulator",
-    "version": "1.0.2",
+    "version": "1.1.0",
     "id": "7be8b3a1-bf4d-4362-8f78-f3e14f69cf3d",
     "formerNames": [],
     "displayName": "AlongTrackSimulator",
@@ -16,7 +16,7 @@
     "dependencies": [
         {
             "name": "WaveVortexModel",
-            "compatibleVersions": "^4.0",
+            "compatibleVersions": "^4.1.0",
             "id": "5b1d512f-b713-471f-9b51-70befc23ccf2"
         }
     ],
