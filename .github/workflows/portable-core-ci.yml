@@ -46,6 +46,7 @@ jobs:
       - name: Check out AlongTrackSimulator
         uses: actions/checkout@v6
         with:
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Configure portable core
@@ -90,11 +91,22 @@ jobs:
           ctest --test-dir "$env:RUNNER_TEMP/alongtrack-portable-core-msvc"
           --build-config Release --output-on-failure
 
+      - name: Verify pull-request committed diff
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: git diff --check "${{ github.event.pull_request.base.sha }}...HEAD"
+
+      - name: Verify pushed or dispatched committed diff
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          git rev-parse --verify HEAD^
+          git diff --check HEAD^...HEAD
+
       - name: Verify source-only clean checkout
         if: always()
         shell: bash
         run: |
-          git diff --check
           forbidden="$(git ls-files | grep -E '(^|/)(build|cmake-build-[^/]+|CMakeFiles)/|\.(a|dylib|dll|exe|mex[a-z0-9]*|o|obj|so)$' || true)"
           if [ -n "$forbidden" ]; then
             printf 'Tracked build directories or compiled products:\n%s\n' "$forbidden"
