@@ -225,6 +225,20 @@ void testMatlabParityFixture() {
     }
 }
 
+void testFusedNodalPrecessionEndpointRegression() {
+    const auto mission = alongtrack::ResolvedMission::fromCatalog("j3");
+    const alongtrack::ProjectionWindow window(3000000.0, 3000000.0, 0.0, 0.0);
+    const auto track = alongtrack::projectedMissionWindow(mission, window, 0.0, 30000.0);
+    check(!track.empty(), "Jason-3 MATLAB regression window contains samples");
+    if (!track.empty()) {
+        const auto& endpoint = track.back();
+        checkClose(endpoint.timeSeconds, 28945.0, 0.0, 0.0,
+                   "Jason-3 MATLAB regression endpoint time");
+        checkParity(endpoint.xMeters, 573092.25507296494, 1.0e-9,
+                    "Jason-3 MATLAB regression endpoint x");
+    }
+}
+
 void testResolvedMissionConfiguration() {
     const auto j3 = alongtrack::ResolvedMission::fromCatalog("j3");
     check(j3.isRepeating(), "Jason-3 is repeating");
@@ -374,6 +388,7 @@ void testValidation() {
 
 int main() {
     testMatlabParityFixture();
+    testFusedNodalPrecessionEndpointRegression();
     testResolvedMissionConfiguration();
     testResolvedMissionIsIndependentOfSourceDefinition();
     testPassSegmentationAndEmptyWindows();

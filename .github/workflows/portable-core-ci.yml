@@ -1,0 +1,115 @@
+name: Portable core CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  portable-core:
+    name: Portable core / ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu GCC
+            id: gcc
+            os: ubuntu-latest
+            cc: gcc
+            cxx: g++
+          - name: Ubuntu Clang
+            id: clang
+            os: ubuntu-latest
+            cc: clang
+            cxx: clang++
+          - name: macOS AppleClang
+            id: appleclang
+            os: macos-latest
+            cc: clang
+            cxx: clang++
+          - name: Windows MSVC
+            id: msvc
+            os: windows-latest
+
+    steps:
+      - name: Check out AlongTrackSimulator
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Configure portable core
+        if: runner.os != 'Windows'
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+        run: >-
+          cmake -S . -B "$RUNNER_TEMP/alongtrack-portable-core-${{ matrix.id }}" -G "Unix Makefiles"
+          -DCMAKE_BUILD_TYPE=Release
+
+      - name: Configure portable core
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: >-
+          cmake -S . -B "$env:RUNNER_TEMP/alongtrack-portable-core-msvc"
+          -A x64 -DCMAKE_CONFIGURATION_TYPES=Release
+
+      - name: Build portable core
+        if: runner.os != 'Windows'
+        run: >-
+          cmake --build "$RUNNER_TEMP/alongtrack-portable-core-${{ matrix.id }}"
+          --parallel
+
+      - name: Build portable core
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: >-
+          cmake --build "$env:RUNNER_TEMP/alongtrack-portable-core-msvc"
+          --config Release --parallel
+
+      - name: Run complete portable-core CTest suite
+        if: runner.os != 'Windows'
+        run: >-
+          ctest --test-dir "$RUNNER_TEMP/alongtrack-portable-core-${{ matrix.id }}"
+          --output-on-failure
+
+      - name: Run complete portable-core CTest suite
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: >-
+          ctest --test-dir "$env:RUNNER_TEMP/alongtrack-portable-core-msvc"
+          --build-config Release --output-on-failure
+
+      - name: Verify pull-request committed diff
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: git diff --check "${{ github.event.pull_request.base.sha }}...HEAD"
+
+      - name: Verify pushed or dispatched committed diff
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          git rev-parse --verify HEAD^
+          git diff --check HEAD^...HEAD
+
+      - name: Verify source-only clean checkout
+        if: always()
+        shell: bash
+        run: |
+          forbidden="$(git ls-files | grep -E '(^|/)(build|cmake-build-[^/]+|CMakeFiles)/|\.(a|dylib|dll|exe|mex[a-z0-9]*|o|obj|so)$' || true)"
+          if [ -n "$forbidden" ]; then
+            printf 'Tracked build directories or compiled products:\n%s\n' "$forbidden"
+            exit 1
+          fi
+          test -z "$(git status --porcelain)"

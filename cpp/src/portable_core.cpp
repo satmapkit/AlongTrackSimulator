@@ -283,19 +283,22 @@ GeographicPoint groundTrackWithNodalPrecession(const OrbitConfiguration& orbit,
     const double ascendingNodeRate = -1.5 * groundTrackJ2 *
                                      std::pow(groundTrackEarthRadiusKm / semiLatusRectum, 2.0) *
                                      meanMotion * std::cos(inclination);
-    const double meanAnomaly = meanAnomalyAtEpoch + meanMotion * timeSeconds;
+    // Keep the nodal-precession sums explicitly fused so every supported C++ runtime
+    // follows the MATLAB reference rounding at long-window endpoints.
+    const double meanAnomaly = std::fma(meanMotion, timeSeconds, meanAnomalyAtEpoch);
     const double eccentricAnomalyValue = eccentricAnomaly(meanAnomaly, orbit.eccentricity());
     const double trueAnomaly = 2.0 * std::atan2(
         std::sqrt(1.0 + orbit.eccentricity()) * std::sin(eccentricAnomalyValue / 2.0),
         std::sqrt(1.0 - orbit.eccentricity()) * std::cos(eccentricAnomalyValue / 2.0));
     const double cosineTheta = std::cos(trueAnomaly + argumentOfPeriapsis);
     const double sineTheta = std::sin(trueAnomaly + argumentOfPeriapsis);
-    const double ascendingNode = ascendingNodeAtEpoch +
-                                 (-earthRotationRadiansPerSecond + ascendingNodeRate) * timeSeconds;
+    const double ascendingNode = std::fma(
+        -earthRotationRadiansPerSecond + ascendingNodeRate, timeSeconds, ascendingNodeAtEpoch);
     const double cosineNode = std::cos(ascendingNode);
     const double sineNode = std::sin(ascendingNode);
-    const double x = cosineTheta * cosineNode - std::cos(inclination) * sineTheta * sineNode;
-    const double y = cosineTheta * sineNode + std::cos(inclination) * sineTheta * cosineNode;
+    const double cosineInclination = std::cos(inclination);
+    const double x = std::fma(cosineTheta, cosineNode, -cosineInclination * sineTheta * sineNode);
+    const double y = std::fma(cosineTheta, sineNode, cosineInclination * sineTheta * cosineNode);
     const double z = sineTheta * std::sin(inclination);
     const double longitude = std::atan2(y, x) * radiansToDegrees;
     const double latitude = std::atan2(z, std::sqrt(x * x + y * y)) * radiansToDegrees;
