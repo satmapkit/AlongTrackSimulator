@@ -340,7 +340,12 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             [lat,lon,time] = self.groundTrackForMissionWithName(missionName,time=options.time);
 
             % 1) apply crude filter
-            withinBox = lat >= minLat & lat <= maxLat & lon >= minLon & lon <= maxLon;
+            if maxLon-minLon > 180
+                withinLongitude = true(size(lon));
+            else
+                withinLongitude = lon >= minLon & lon <= maxLon;
+            end
+            withinBox = lat >= minLat & lat <= maxLat & withinLongitude;
             lat(~withinBox) = [];
             lon(~withinBox) = [];
             time(~withinBox) = [];
@@ -413,7 +418,12 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             [lat,lon,time] = self.repeatGroundTrackForMissionWithName(missionName);
 
             % 1) apply crude filter
-            withinBox = lat >= minLat & lat <= maxLat & lon >= minLon & lon <= maxLon;
+            if maxLon-minLon > 180
+                withinLongitude = true(size(lon));
+            else
+                withinLongitude = lon >= minLon & lon <= maxLon;
+            end
+            withinBox = lat >= minLat & lat <= maxLat & withinLongitude;
             lat(~withinBox) = [];
             lon(~withinBox) = [];
             time(~withinBox) = [];
@@ -495,6 +505,10 @@ classdef AlongTrackSimulator < AlongTrackSimulatorBase
             % - Returns tracks: cell array — each cell contains a struct for one pass
             arguments
                 alongtrack struct
+            end
+            if isempty(alongtrack.t)
+                tracks = cell(0,1);
+                return
             end
             trackIndices = find(diff(alongtrack.t)>1);
             trackIndices(end+1) = length(alongtrack.t);
