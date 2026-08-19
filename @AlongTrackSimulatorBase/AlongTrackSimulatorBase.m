@@ -19,7 +19,12 @@ classdef AlongTrackSimulatorBase
             optionsArgs = namedargs2cell(options);
             [x0, y0, minLat, minLon, maxLat, maxLon] = AlongTrackSimulatorBase.LatitudeLongitudeBoundsForTransverseMercatorBox(optionsArgs{:});
             [lat,lon,time] = self.groundTrackForMissionWithName("s6a");
-            withinBox = lat >= minLat & lat <= maxLat & lon >= minLon & lon <= maxLon;
+            if maxLon-minLon > 180
+                withinLongitude = true(size(lon));
+            else
+                withinLongitude = lon >= minLon & lon <= maxLon;
+            end
+            withinBox = lat >= minLat & lat <= maxLat & withinLongitude;
             lat(~withinBox) = [];
             lon(~withinBox) = [];
             time(~withinBox) = [];

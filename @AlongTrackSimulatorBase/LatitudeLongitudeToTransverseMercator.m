@@ -34,7 +34,8 @@ v = WGS84a ./ sqrt( 1 - e2*s2);
 e2 = e2 / (1 - e2); % From this point forward e2 will actually be (e^prime)^2
 e2c2 = e2*c2;
 
-deltaLambda = (lon - lon0)*pi/180;
+deltaLambda = mod(lon - lon0 + 180,360) - 180;
+deltaLambda = deltaLambda*pi/180;
 d2c2 = deltaLambda.*deltaLambda.*c2;
 
 % Terms to compute x.

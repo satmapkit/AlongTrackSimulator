@@ -301,6 +301,10 @@ classdef WVModelOutputGroupAlongTrack < WVModelOutputGroup
                 alongtrack (1,1) struct
             end
             
+            if isempty(alongtrack.t)
+                tracks = cell(0,1);
+                return
+            end
             trackIndices = find(diff(alongtrack.t)>1);
             trackIndices(end+1) = length(alongtrack.t);
             startIndex = 1;
