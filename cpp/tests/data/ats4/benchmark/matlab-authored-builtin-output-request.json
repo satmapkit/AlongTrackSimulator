@@ -1,0 +1,23 @@
+{
+  "schemaIdentifier": "wave-vortex-run-request-v1",
+  "schemaVersion": 1,
+  "modelFiles": [
+    "matlab-authored-builtin-output.nc"
+  ],
+  "integration": {
+    "method": "fixed-rk4",
+    "finalTime": 0.0002,
+    "initialStep": 1E-6
+  },
+  "output": {
+    "policy": "create",
+    "destinations": {
+      "primary": "matlab-authored-builtin-output-result.nc"
+    }
+  },
+  "execution": {
+    "fftProvider": "reference",
+    "threads": 1
+  },
+  "report": "matlab-authored-builtin-output-report.json"
+}

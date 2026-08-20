@@ -1,0 +1,26 @@
+{
+  "schemaIdentifier": "wave-vortex-run-request-v1",
+  "schemaVersion": 1,
+  "modelFiles": [
+    "matlab-authored-geodetic.nc"
+  ],
+  "integration": {
+    "method": "adaptive-rk23",
+    "finalTime": 100.5,
+    "initialStep": 10,
+    "maximumStep": 60,
+    "relativeTolerance": 1E-6,
+    "absoluteToleranceScale": 1E-9
+  },
+  "output": {
+    "policy": "create",
+    "destinations": {
+      "geodetic": "matlab-authored-geodetic-output.nc"
+    }
+  },
+  "execution": {
+    "fftProvider": "reference",
+    "threads": 1
+  },
+  "report": "matlab-authored-geodetic-report.json"
+}

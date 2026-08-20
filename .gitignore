@@ -1,5 +1,8 @@
 *.asv
 .DS_Store
 *.nc
+!cpp/tests/data/ats4/matlab-authored-repeating.nc
+!cpp/tests/data/ats4/matlab-authored-geodetic.nc
+!cpp/tests/data/ats4/benchmark/matlab-authored-builtin-output.nc
 *.mp4
 !docs/tutorials/*/*.mp4

@@ -1,0 +1,23 @@
+{
+  "schemaIdentifier": "wave-vortex-run-request-v1",
+  "schemaVersion": 1,
+  "modelFiles": [
+    "matlab-authored-repeating.nc"
+  ],
+  "integration": {
+    "method": "fixed-rk4",
+    "finalTime": 100.5,
+    "initialStep": 10
+  },
+  "output": {
+    "policy": "create",
+    "destinations": {
+      "repeating": "matlab-authored-repeating-output.nc"
+    }
+  },
+  "execution": {
+    "fftProvider": "reference",
+    "threads": 1
+  },
+  "report": "matlab-authored-repeating-report.json"
+}

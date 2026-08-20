@@ -1,0 +1,400 @@
+name: Source-linked WaveVortex runner CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  WAVEVORTEX_REVISION: 84dc1b53093650fdbc9be62b637cf298c46a95d3
+  OCEANKIT_REVISION: 96f0b801c565406dd5a4ba2480334a3a481c3e2c
+
+jobs:
+  source-linked-runner:
+    name: Source-linked runner / ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu GCC
+            id: gcc
+            os: ubuntu-latest
+            cc: gcc
+            cxx: g++
+          - name: Ubuntu Clang
+            id: clang
+            os: ubuntu-latest
+            cc: clang
+            cxx: clang++
+          - name: macOS AppleClang
+            id: appleclang
+            os: macos-latest
+            cc: clang
+            cxx: clang++
+
+    steps:
+      - name: Check out AlongTrackSimulator
+        uses: actions/checkout@v6
+        with:
+          path: alongtrack
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check out pinned WaveVortexModel source
+        uses: actions/checkout@v6
+        with:
+          repository: JeffreyEarly/wave-vortex-model
+          ref: ${{ env.WAVEVORTEX_REVISION }}
+          path: wave-vortex-model
+          persist-credentials: false
+
+      - name: Install NetCDF build dependency
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libnetcdf-dev pkg-config
+
+      - name: Install NetCDF build dependency
+        if: runner.os == 'macOS'
+        run: brew install netcdf pkg-config
+
+      - name: Verify WaveVortexModel revision
+        shell: bash
+        run: test "$(git -C wave-vortex-model rev-parse HEAD)" = "$WAVEVORTEX_REVISION"
+
+      - name: Configure source-linked runner
+        if: runner.os == 'Linux'
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+        run: >-
+          cmake -S alongtrack -B "${{ runner.temp }}/alongtrack-${{ matrix.id }}" -G "Unix Makefiles"
+          -DCMAKE_BUILD_TYPE=Release
+          -DBUILD_TESTING=ON
+          -DALONGTRACK_BUILD_WAVEVORTEX_EXTENSION=ON
+          -DALONGTRACK_WAVEVORTEX_SOURCE_DIR="${{ github.workspace }}/wave-vortex-model"
+          -DALONGTRACK_WARNINGS_AS_ERRORS=ON
+
+      - name: Configure source-linked runner
+        if: runner.os == 'macOS'
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+        run: >-
+          cmake -S alongtrack -B "${{ runner.temp }}/alongtrack-${{ matrix.id }}" -G "Unix Makefiles"
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_PREFIX_PATH="$(brew --prefix netcdf)"
+          -DBUILD_TESTING=ON
+          -DALONGTRACK_BUILD_WAVEVORTEX_EXTENSION=ON
+          -DALONGTRACK_WAVEVORTEX_SOURCE_DIR="${{ github.workspace }}/wave-vortex-model"
+          -DALONGTRACK_WARNINGS_AS_ERRORS=ON
+
+      - name: Build source-linked runner and tests
+        run: cmake --build "${{ runner.temp }}/alongtrack-${{ matrix.id }}" --parallel
+
+      - name: Run complete AlongTrack CTest suite
+        run: ctest --test-dir "${{ runner.temp }}/alongtrack-${{ matrix.id }}" --output-on-failure
+
+      - name: Verify clean source checkouts
+        if: always()
+        shell: bash
+        run: |
+          test -z "$(git -C alongtrack status --porcelain)"
+          test -z "$(git -C wave-vortex-model status --porcelain)"
+
+  sanitizers:
+    name: Source-linked runner / Clang ASan and UBSan
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y clang libnetcdf-dev pkg-config
+
+      - name: Check out AlongTrackSimulator
+        uses: actions/checkout@v6
+        with:
+          path: alongtrack
+          persist-credentials: false
+
+      - name: Check out pinned WaveVortexModel source
+        uses: actions/checkout@v6
+        with:
+          repository: JeffreyEarly/wave-vortex-model
+          ref: ${{ env.WAVEVORTEX_REVISION }}
+          path: wave-vortex-model
+          persist-credentials: false
+
+      - name: Configure sanitizer build
+        env:
+          CC: clang
+          CXX: clang++
+        run: >-
+          cmake -S alongtrack -B "${{ runner.temp }}/alongtrack-sanitizers" -G "Unix Makefiles"
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          -DBUILD_TESTING=ON
+          -DALONGTRACK_BUILD_WAVEVORTEX_EXTENSION=ON
+          -DALONGTRACK_WAVEVORTEX_SOURCE_DIR="${{ github.workspace }}/wave-vortex-model"
+          -DALONGTRACK_ENABLE_SANITIZERS=ON
+          -DALONGTRACK_WARNINGS_AS_ERRORS=ON
+
+      - name: Build sanitizer configuration
+        run: cmake --build "${{ runner.temp }}/alongtrack-sanitizers" --parallel
+
+      - name: Run sanitizer CTests
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+        run: ctest --test-dir "${{ runner.temp }}/alongtrack-sanitizers" --output-on-failure
+
+  matlab-verification:
+    name: MATLAB numerical, authoring, and persistence / R2025b
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Install source-linked runner build dependencies
+        run: sudo apt-get update && sudo apt-get install -y libnetcdf-dev pkg-config
+
+      - name: Check out AlongTrackSimulator
+        uses: actions/checkout@v6
+        with:
+          path: source
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check out pinned WaveVortexModel source
+        uses: actions/checkout@v6
+        with:
+          repository: JeffreyEarly/wave-vortex-model
+          ref: ${{ env.WAVEVORTEX_REVISION }}
+          path: wave-vortex-model
+          persist-credentials: false
+
+      - name: Check out immutable OceanKit packages
+        uses: actions/checkout@v6
+        with:
+          repository: JeffreyEarly/OceanKit
+          ref: ${{ env.OCEANKIT_REVISION }}
+          path: OceanKit
+          persist-credentials: false
+
+      - name: Verify dependency revisions
+        shell: bash
+        run: |
+          test "$(git -C wave-vortex-model rev-parse HEAD)" = "$WAVEVORTEX_REVISION"
+          test "$(git -C OceanKit rev-parse HEAD)" = "$OCEANKIT_REVISION"
+
+      - name: Set up MATLAB R2025b
+        uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2025b
+          cache: true
+
+      - name: Create isolated MATLAB preference and build roots
+        shell: bash
+        run: |
+          mkdir -p "${{ runner.temp }}/matlab-preferences-tests"
+          mkdir -p "${{ runner.temp }}/matlab-addons-tests"
+          mkdir -p "${{ runner.temp }}/alongtrack-matlab-tests"
+
+      - name: Configure source-linked runner for MATLAB parity
+        run: >-
+          cmake -S source -B "${{ runner.temp }}/alongtrack-matlab-tests" -G "Unix Makefiles"
+          -DCMAKE_BUILD_TYPE=Release
+          -DBUILD_TESTING=ON
+          -DALONGTRACK_BUILD_WAVEVORTEX_EXTENSION=ON
+          -DALONGTRACK_WAVEVORTEX_SOURCE_DIR="${{ github.workspace }}/wave-vortex-model"
+          -DALONGTRACK_WARNINGS_AS_ERRORS=ON
+
+      - name: Build source-linked runner for MATLAB parity
+        run: >-
+          cmake --build "${{ runner.temp }}/alongtrack-matlab-tests"
+          --target alongtrack-wave-vortex-run --parallel
+
+      - name: Run complete MATLAB ATS 4 verification and Code Analyzer
+        uses: matlab-actions/run-command@v3
+        env:
+          MATLAB_PREFDIR: ${{ runner.temp }}/matlab-preferences-tests
+          ATS_MATLAB_ADDON_ROOT: ${{ runner.temp }}/matlab-addons-tests
+          ATS4_EXTENDED_RUNNER: ${{ runner.temp }}/alongtrack-matlab-tests/cpp/extensions/wavevortex/alongtrack-wave-vortex-run
+        with:
+          command: >-
+            sourceRoot = fullfile(pwd,"source");
+            waveVortexRoot = fullfile(pwd,"wave-vortex-model");
+            oceanKitRoot = fullfile(pwd,"OceanKit");
+            assert(startsWith(string(prefdir),string(getenv("MATLAB_PREFDIR"))),"MATLAB preferences are not isolated.");
+            addOnSettings = settings;
+            addOnSettings.matlab.addons.InstallationFolder.TemporaryValue = getenv("ATS_MATLAB_ADDON_ROOT");
+            assert(string(addOnSettings.matlab.addons.InstallationFolder.ActiveValue) == string(getenv("ATS_MATLAB_ADDON_ROOT")),"MATLAB add-on installation is not isolated.");
+            assert(strlength(string(getenv("ATS4_EXTENDED_RUNNER"))) > 0 && isfile(getenv("ATS4_EXTENDED_RUNNER")),"ATS4_EXTENDED_RUNNER must name the built source-linked runner.");
+            mpmAddRepository("OceanKit",oceanKitRoot,Position="beginning");
+            mpminstall(waveVortexRoot,Prompt=false,Authoring=true,Temporary=true);
+            mpminstall(sourceRoot,Prompt=false,Authoring=true,Temporary=true);
+            assert(startsWith(string(which("WVModel")),waveVortexRoot),"MATLAB did not load the pinned WaveVortexModel source checkout.");
+            assert(startsWith(string(which("AlongTrackSimulator")),sourceRoot),"MATLAB did not load the AlongTrackSimulator source checkout.");
+            testFiles = [fullfile(sourceRoot,"UnitTests","TestPortableCoreParity.m"); fullfile(sourceRoot,"UnitTests","TestWVModelOutputGroupAlongTrack.m"); fullfile(sourceRoot,"UnitTests","TestAlongTrackPortableRunBundle.m")];
+            suite = [testsuite(testFiles(1)), testsuite(testFiles(2)), testsuite(testFiles(3))];
+            assert(numel(suite) == 17,"ATS 4 MATLAB verification must contain exactly 17 tests.");
+            testRunner = matlab.unittest.TestRunner.withTextOutput;
+            results = testRunner.run(suite);
+            assert(numel(results) == 17,"ATS 4 MATLAB verification did not execute all 17 tests.");
+            assert(~any([results.Incomplete]),"ATS 4 MATLAB verification skipped or aborted a test.");
+            assertSuccess(results);
+            changedFiles = [fullfile(sourceRoot,"authorAlongTrackPortableRunBundle.m"); fullfile(sourceRoot,"buildfile.m"); fullfile(sourceRoot,"@AlongTrackSimulatorBase","AlongTrackSimulatorBase.m"); fullfile(sourceRoot,"UnitTests","TestAlongTrackPortableRunBundle.m"); fullfile(sourceRoot,"tools","build_website_documentation.m"); fullfile(sourceRoot,"tools","check_website_documentation.m"); fullfile(sourceRoot,"tools","generate_ats4_portable_bundles.m"); fullfile(sourceRoot,"tools","validateDocumentationBuilder.m"); fullfile(sourceRoot,"tools","verifyAlongTrackPackage.m")];
+            assert(all(isfile(changedFiles)),"An ATS 4 MATLAB Code Analyzer target is missing.");
+            analyzerIssues = cellfun(@(file)checkcode(file,'-id'),cellstr(changedFiles),UniformOutput=false);
+            for iFile = 1:numel(changedFiles), if ~isempty(analyzerIssues{iFile}), fprintf("Code Analyzer issues in %s:\n",changedFiles(iFile)); disp(analyzerIssues{iFile}); end; end;
+            assert(all(cellfun(@isempty,analyzerIssues)),"Code Analyzer reported an issue in an ATS 4 MATLAB file.");
+
+      - name: Verify clean source checkouts
+        if: always()
+        shell: bash
+        run: |
+          test -z "$(git -C source status --porcelain)"
+          test -z "$(git -C wave-vortex-model status --porcelain)"
+          test -z "$(git -C OceanKit status --porcelain)"
+
+  documentation:
+    name: Documentation / MATLAB R2025b
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out AlongTrackSimulator
+        uses: actions/checkout@v6
+        with:
+          path: source
+          persist-credentials: false
+
+      - name: Check out immutable OceanKit packages
+        uses: actions/checkout@v6
+        with:
+          repository: JeffreyEarly/OceanKit
+          ref: ${{ env.OCEANKIT_REVISION }}
+          path: OceanKit
+          persist-credentials: false
+
+      - name: Set up MATLAB R2025b
+        uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2025b
+          cache: true
+
+      - name: Create isolated MATLAB preferences
+        run: mkdir -p "${{ runner.temp }}/matlab-preferences-documentation"
+
+      - name: Verify committed documentation
+        uses: matlab-actions/run-command@v3
+        env:
+          MATLAB_PREFDIR: ${{ runner.temp }}/matlab-preferences-documentation
+        with:
+          command: >-
+            sourceRoot = fullfile(pwd,"source");
+            oceanKitRoot = fullfile(pwd,"OceanKit");
+            mpmAddRepository("OceanKit",oceanKitRoot,Position="beginning");
+            mpminstall(sourceRoot,Prompt=false,Authoring=true,Temporary=true);
+            mpminstall(fullfile(oceanKitRoot,"ClassDocumentation-1.3.2"),Prompt=false,Temporary=true);
+            cd(sourceRoot);
+            buildtool docs:check
+
+      - name: Verify clean source checkout
+        if: always()
+        working-directory: source
+        shell: bash
+        run: test -z "$(git status --porcelain)"
+
+  source-only-package:
+    name: Source-only package and exported build / MATLAB R2025b
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Install exported-runtime build dependencies
+        run: sudo apt-get update && sudo apt-get install -y libnetcdf-dev pkg-config
+
+      - name: Check out AlongTrackSimulator
+        uses: actions/checkout@v6
+        with:
+          path: source
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check out pinned WaveVortexModel source
+        uses: actions/checkout@v6
+        with:
+          repository: JeffreyEarly/wave-vortex-model
+          ref: ${{ env.WAVEVORTEX_REVISION }}
+          path: wave-vortex-model
+          persist-credentials: false
+
+      - name: Check out immutable OceanKit export tools
+        uses: actions/checkout@v6
+        with:
+          repository: JeffreyEarly/OceanKit
+          ref: ${{ env.OCEANKIT_REVISION }}
+          path: OceanKit
+          persist-credentials: false
+
+      - name: Set up MATLAB R2025b
+        uses: matlab-actions/setup-matlab@v3
+        with:
+          release: R2025b
+          cache: true
+
+      - name: Create isolated package workspace
+        run: |
+          mkdir -p "${{ runner.temp }}/matlab-preferences-package"
+          mkdir -p "${{ runner.temp }}/matlab-addons-package"
+          mkdir -p "${{ runner.temp }}/alongtrack-package-export"
+          mkdir -p "${{ runner.temp }}/alongtrack-exported-build"
+
+      - name: Verify frozen benchmark evidence
+        working-directory: source
+        shell: bash
+        run: ./tools/verify_ats4_benchmark_evidence.sh
+
+      - name: Export and install the source-only package
+        uses: matlab-actions/run-command@v3
+        env:
+          MATLAB_PREFDIR: ${{ runner.temp }}/matlab-preferences-package
+          ATS_MATLAB_ADDON_ROOT: ${{ runner.temp }}/matlab-addons-package
+        with:
+          command: >-
+            sourceRoot = fullfile(pwd,"source");
+            oceanKitRoot = fullfile(pwd,"OceanKit");
+            exportRoot = "${{ runner.temp }}/alongtrack-package-export";
+            addOnSettings = settings;
+            addOnSettings.matlab.addons.InstallationFolder.TemporaryValue = getenv("ATS_MATLAB_ADDON_ROOT");
+            mpmAddRepository("OceanKit",oceanKitRoot,Position="beginning");
+            addpath(fullfile(oceanKitRoot,"tools"));
+            ci_release(rootDir=sourceRoot,bumpType="none",shouldPackageForDistribution=true,outputRoot=exportRoot);
+            exports = dir(fullfile(exportRoot,"AlongTrackSimulator-*"));
+            assert(numel(exports) == 1,"Expected exactly one AlongTrackSimulator export.");
+            packageRoot = fullfile(exports(1).folder,exports(1).name);
+            worktreeGitFile = fullfile(packageRoot,".git");
+            if isfile(worktreeGitFile), delete(worktreeGitFile); end;
+            addpath(fullfile(sourceRoot,"tools"));
+            verifyAlongTrackPackage(packageRoot);
+
+      - name: Inspect and build the export outside both source checkouts
+        env:
+          ATS_EXPECTED_WVM_REVISION: ${{ env.WAVEVORTEX_REVISION }}
+        shell: bash
+        run: |
+          export_root=$(find "${{ runner.temp }}/alongtrack-package-export" -maxdepth 1 -type d -name 'AlongTrackSimulator-*' -print -quit)
+          test -n "$export_root"
+          find "$export_root" -type f -print | sort
+          bash source/tools/verify_source_only_export.sh "$export_root" "$PWD/wave-vortex-model" "${{ runner.temp }}/alongtrack-exported-build"
+
+      - name: Verify clean source checkouts
+        if: always()
+        shell: bash
+        run: |
+          test -z "$(git -C source status --porcelain)"
+          test -z "$(git -C wave-vortex-model status --porcelain)"

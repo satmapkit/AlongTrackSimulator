@@ -435,6 +435,43 @@ void testCatalogPreflightAndIndependentResolvedObservers() {
                     ->configuration()
                     .values.size() == 16,
             "later source-record mutation changed resolved observer configuration");
+
+    auto persistedObserver = observerRecord(
+        "persisted-along-track", mission, window, 1.0,
+        {"ssh", "ssu", "ssv"}, WVPositionInterpolation::spline);
+    auto persistedSource = portableRecord(
+        shape, {persistedObserver}, schedule);
+    // WVLegacyObservationNetCDFAdapter reconstructs portable-schema records
+    // from the typed configuration and leaves the legacy field projection at
+    // its defaults. This shape must remain a supported persisted input.
+    persistedSource.observers.at(1).fieldNames.clear();
+    persistedSource.observers.at(1).trackedFieldInterpolation =
+        WVPositionInterpolation::linear;
+    WVPortableObserverDescriptor persistedDescriptor;
+    status = WVPortableObserverDescriptor::create(
+        persistedSource, extended, persistedDescriptor);
+    requireStatus(status,
+                  "portable persisted AlongTrack observer construction");
+    require(persistedDescriptor.observers().at(1).fieldNames.empty() &&
+                persistedDescriptor.resolvedObserver(
+                    persistedDescriptor.observers().at(1))
+                        ->configuration()
+                        .values.size() == 16,
+            "portable persisted observer did not retain typed authority");
+
+    auto conflictingProjection = persistedSource;
+    conflictingProjection.observers.at(1).trackedFieldInterpolation =
+        WVPositionInterpolation::spline;
+    WVPortableObserverDescriptor rejectedProjection;
+    require(!WVPortableObserverDescriptor::create(
+                conflictingProjection, extended, rejectedProjection),
+            "incomplete legacy AlongTrack field projection was accepted");
+
+    conflictingProjection = persistedSource;
+    conflictingProjection.observers.at(1).fieldNames = {"ssh"};
+    require(!WVPortableObserverDescriptor::create(
+                conflictingProjection, extended, rejectedProjection),
+            "conflicting legacy AlongTrack field projection was accepted");
 }
 
 void testScheduleCursorRestartAndBoundedStorage() {
@@ -594,6 +631,22 @@ void testScheduleCursorRestartAndBoundedStorage() {
     const auto repeating = alongtrack::ResolvedMission::fromCatalog("j3");
     const alongtrack::ProjectionWindow repeatingWindow(
         3000000.0, 3000000.0, 0.0, 0.0);
+    const auto shortRepeatingRecord = scheduleRecord(
+        repeating, repeatingWindow, 60.0, 0.0, 86400.0);
+    const auto longRepeatingRecord = scheduleRecord(
+        repeating, repeatingWindow, 60.0, 0.0, 180.0 * 86400.0);
+    std::shared_ptr<const WVOutputSchedule> shortRepeatingSchedule;
+    std::shared_ptr<const WVOutputSchedule> longRepeatingSchedule;
+    status = extended->outputSchedules().resolve(
+        shortRepeatingRecord, shortRepeatingSchedule);
+    if (status) {
+        status = extended->outputSchedules().resolve(
+            longRepeatingRecord, longRepeatingSchedule);
+    }
+    requireStatus(status, "short/long repeating schedule construction");
+    require(shortRepeatingSchedule->persistentBytes() ==
+                longRepeatingSchedule->persistentBytes(),
+            "repeating schedule storage grew with integration duration");
     const auto repeatingRecord = scheduleRecord(
         repeating, repeatingWindow, 1.0, 0.0, 30000.0);
     std::shared_ptr<const WVOutputSchedule> repeatingSchedule;
@@ -663,7 +716,10 @@ void testScheduleCursorRestartAndBoundedStorage() {
             "restart changed the next repeating occurrence or complete cursor");
     std::cout << "METRIC schedule-persistent-bytes short="
               << shortSchedule->persistentBytes() << " long="
-              << longSchedule->persistentBytes() << " cursor="
+              << longSchedule->persistentBytes() << " repeating-short="
+              << shortRepeatingSchedule->persistentBytes()
+              << " repeating-long="
+              << longRepeatingSchedule->persistentBytes() << " cursor="
               << first.proposedCursor.values.encodedBytes() << '\n';
 }
 

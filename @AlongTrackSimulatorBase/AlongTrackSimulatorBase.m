@@ -28,9 +28,9 @@ classdef AlongTrackSimulatorBase
             lat(~withinBox) = [];
             lon(~withinBox) = [];
             time(~withinBox) = [];
-            use options;
-            [x,y] = AlongTrackSimulatorBase.LatitudeLongitudeToTransverseMercator(lat,lon,lon0=lon0);
-            out_of_bounds = (x < x0 - Lx/2) | (x > x0 + Lx/2) | (y < y0 - Ly/2) | (y > y0 + Ly/2);
+            [x,y] = AlongTrackSimulatorBase.LatitudeLongitudeToTransverseMercator(lat,lon,lon0=options.lon0);
+            out_of_bounds = (x < x0 - options.Lx/2) | (x > x0 + options.Lx/2) | ...
+                (y < y0 - options.Ly/2) | (y > y0 + options.Ly/2);
             alongtrack.x = x(~out_of_bounds);
             alongtrack.y = y(~out_of_bounds)-y0;
             alongtrack.time = time(~out_of_bounds);

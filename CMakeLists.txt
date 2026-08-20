@@ -6,6 +6,10 @@ option(ALONGTRACK_WARNINGS_AS_ERRORS
     "Treat AlongTrackSimulator C++ warnings as errors"
     OFF
 )
+option(ALONGTRACK_ENABLE_SANITIZERS
+    "Enable ASan and UBSan for AlongTrackSimulator-owned C++ targets"
+    OFF
+)
 option(ALONGTRACK_BUILD_WAVEVORTEX_EXTENSION
     "Build the source-linked WaveVortexModel AlongTrack extension"
     OFF
@@ -29,6 +33,26 @@ function(alongtrack_enable_warnings target)
     endif()
 endfunction()
 
+function(alongtrack_enable_sanitizers target)
+    if(NOT ALONGTRACK_ENABLE_SANITIZERS)
+        return()
+    endif()
+    if(MSVC)
+        message(FATAL_ERROR
+            "ALONGTRACK_ENABLE_SANITIZERS requires a Clang or GCC toolchain")
+    endif()
+
+    # Keep instrumentation on ATS-owned targets. WaveVortexModel is a pinned,
+    # read-only source dependency and has its own sanitizer verification.
+    target_compile_options(${target} PRIVATE
+        -fsanitize=address,undefined
+        -fno-omit-frame-pointer
+    )
+    target_link_options(${target} PRIVATE
+        -fsanitize=address,undefined
+    )
+endfunction()
+
 add_library(alongtrack_portable_core
     cpp/src/portable_core.cpp
 )
@@ -45,6 +69,7 @@ set_target_properties(alongtrack_portable_core PROPERTIES
 )
 
 alongtrack_enable_warnings(alongtrack_portable_core)
+alongtrack_enable_sanitizers(alongtrack_portable_core)
 
 include(CTest)
 
@@ -61,8 +86,9 @@ if(ALONGTRACK_BUILD_WAVEVORTEX_EXTENSION)
         endif()
 
         # WaveVortexModel remains a source-linked runtime dependency. Excluding
-        # its standalone targets and test suite from the default build keeps
-        # this target narrowly scoped to ATS #3.
+        # its unrelated standalone targets and test suite from the default
+        # build keeps ATS responsible only for the runtime, reusable runner,
+        # and the base executable used by the compatibility test.
         set(_alongtrack_saved_build_testing "${BUILD_TESTING}")
         set(BUILD_TESTING OFF)
         add_subdirectory(
@@ -72,6 +98,11 @@ if(ALONGTRACK_BUILD_WAVEVORTEX_EXTENSION)
         )
         set(BUILD_TESTING "${_alongtrack_saved_build_testing}")
         unset(_alongtrack_saved_build_testing)
+    endif()
+
+    if(NOT TARGET WaveVortex::Runner)
+        message(FATAL_ERROR
+            "The WaveVortexModel source dependency does not provide WaveVortex::Runner")
     endif()
 
     add_subdirectory(cpp/extensions/wavevortex)
@@ -88,6 +119,7 @@ if(BUILD_TESTING)
     target_compile_features(alongtrack_portable_core_tests PRIVATE cxx_std_17)
     set_target_properties(alongtrack_portable_core_tests PROPERTIES CXX_EXTENSIONS OFF)
     alongtrack_enable_warnings(alongtrack_portable_core_tests)
+    alongtrack_enable_sanitizers(alongtrack_portable_core_tests)
     add_test(NAME alongtrack_portable_core COMMAND alongtrack_portable_core_tests)
     add_test(
         NAME alongtrack_portable_core_source_policy
