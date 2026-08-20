@@ -11,6 +11,7 @@ permalink: /
 
 - [Install](installation) the Matlab package
 - Read the [Getting Started](getting-started) guide
+- Build and use the [source-linked portable WaveVortex runner](portable-wave-vortex-runner)
 - Dive deeper into the [class documentation](classes/alongtracksimulator/)
 
 ---

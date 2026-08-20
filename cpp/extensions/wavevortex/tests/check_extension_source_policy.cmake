@@ -1,4 +1,7 @@
 file(GLOB_RECURSE extension_sources
+    "${ATS_SOURCE_DIR}/cpp/extensions/wavevortex/app/*.c"
+    "${ATS_SOURCE_DIR}/cpp/extensions/wavevortex/app/*.cc"
+    "${ATS_SOURCE_DIR}/cpp/extensions/wavevortex/app/*.cpp"
     "${ATS_SOURCE_DIR}/cpp/extensions/wavevortex/include/*.h"
     "${ATS_SOURCE_DIR}/cpp/extensions/wavevortex/include/*.hpp"
     "${ATS_SOURCE_DIR}/cpp/extensions/wavevortex/src/*.c"
@@ -26,6 +29,27 @@ endforeach()
 if(NOT found_explicit_registration)
     message(FATAL_ERROR
         "WaveVortex extension does not expose explicit catalog registration")
+endif()
+
+set(runner_source
+    "${ATS_SOURCE_DIR}/cpp/extensions/wavevortex/app/AlongTrackWaveVortexRunMain.cpp")
+if(NOT EXISTS "${runner_source}")
+    message(FATAL_ERROR "The source-linked AlongTrack runner entry point is missing")
+endif()
+file(READ "${runner_source}" runner_contents)
+foreach(required_call IN ITEMS
+        "addBuiltInExtensions"
+        "registerAlongTrackExtensions"
+        "builder.freeze"
+        "runWaveVortex")
+    if(NOT runner_contents MATCHES "${required_call}")
+        message(FATAL_ERROR
+            "The source-linked AlongTrack runner omits ${required_call}")
+    endif()
+endforeach()
+if(runner_contents MATCHES "static[ \t]+WVExtensionCatalog|dlopen|LoadLibrary|DllMain")
+    message(FATAL_ERROR
+        "The source-linked AlongTrack runner uses forbidden global or plugin registration")
 endif()
 
 file(READ "${ATS_SOURCE_DIR}/cpp/extensions/wavevortex/CMakeLists.txt"

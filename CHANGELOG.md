@@ -1,5 +1,9 @@
 # Version History
 
+## [Unreleased]
+- Added the source-linked `alongtrack-wave-vortex-run` authoring and execution workflow for the portable AlongTrack schedule and observing-system pair.
+- Added MATLAB portable-bundle authoring, source-only export verification, reproducible WaveVortexModel compatibility CI, and documentation/package checks.
+
 ## [1.1.0] - 2026-07-24
 - Added generic along-track sampling for registered two-dimensional WaveVortexModel fields.
 - Added `addMissionsToOutputFile` for configuring multiple mission output groups in one call.

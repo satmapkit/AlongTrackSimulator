@@ -406,6 +406,23 @@ void hashString(std::uint64_t& hash, const std::string& value) noexcept {
     return WVKernelStatus::ok();
 }
 
+[[nodiscard]] bool legacyFieldProjectionMatches(
+    const runtime::WVObserverRecord& record,
+    const std::vector<std::string>& resolvedFieldNames,
+    runtime::WVPositionInterpolation resolvedInterpolation) noexcept {
+    // Portable-schema persistence reconstructs the authoritative typed
+    // configuration without synthesizing the older field-list projection.
+    // Accept that entirely absent projection, including its default linear
+    // interpolation value. If a legacy projection is present, it remains
+    // redundant evidence and must agree with the typed configuration.
+    const bool hasLegacyFieldProjection = !record.fieldNames.empty();
+    return hasLegacyFieldProjection
+               ? record.fieldNames == resolvedFieldNames &&
+                     record.trackedFieldInterpolation == resolvedInterpolation
+               : record.trackedFieldInterpolation ==
+                     runtime::WVPositionInterpolation::linear;
+}
+
 [[nodiscard]] WVKernelStatus validateObserverRecord(
     const runtime::WVObserverRecord& record,
     const runtime::WVPortableTypedRecord& configuration,
@@ -415,10 +432,16 @@ void hashString(std::uint64_t& hash, const std::string& value) noexcept {
         record.name.empty() ||
         !runtime::samePortableTypedRecordValue(record.configuration,
                                                configuration) ||
-        record.fieldNames != resolved.fieldNames ||
-        record.trackedFieldInterpolation != resolved.interpolation ||
+        !legacyFieldProjectionMatches(record, resolved.fieldNames,
+                                      resolved.interpolation) ||
         !record.stateBlockIdentifiers.empty() || !record.x.empty() ||
-        !record.y.empty() || !record.z.empty() || record.outputScale != 1.0 ||
+        !record.y.empty() || !record.z.empty() || record.isXYOnly ||
+        !record.shouldAntialias ||
+        record.advectionInterpolation !=
+            runtime::WVPositionInterpolation::linear ||
+        record.horizontalAbsoluteTolerance != 0.0 ||
+        record.verticalAbsoluteTolerance != 0.0 ||
+        record.outputScale != 1.0 ||
         record.outputOffset != 0.0) {
         return invalid("AlongTrack observer record conflicts with its resolved configuration.");
     }
@@ -990,8 +1013,8 @@ public:
             observer.contractVersion != contractVersion() ||
             !runtime::samePortableTypedRecordValue(observer.configuration,
                                                    configuration_) ||
-            observer.fieldNames != requestedFieldNames_ ||
-            observer.trackedFieldInterpolation != interpolation_ ||
+            !legacyFieldProjectionMatches(observer, requestedFieldNames_,
+                                          interpolation_) ||
             !observer.stateBlockIdentifiers.empty() ||
             requestedFieldMask_ == 0U ||
             resolvedDependencyMask != dependencyMask_) {

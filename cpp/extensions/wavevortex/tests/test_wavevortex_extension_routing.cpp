@@ -511,6 +511,7 @@ public:
             return {WVKernelStatusCode::numericalFailure,
                     "injected later AlongTrack memory-route failure"};
         }
+        ++committedOffsets_[route.fileOrdinal];
         ++successfulRouteCount_;
         result.writeCount = 1;
         result.writtenBytes = batch_.metrics().liveBytes;
@@ -524,6 +525,9 @@ public:
 
     const std::array<std::size_t, 2>& attempts() const noexcept {
         return attempts_;
+    }
+    const std::array<std::size_t, 2>& committedOffsets() const noexcept {
+        return committedOffsets_;
     }
 
     std::size_t identityCount() const noexcept { return identityCount_; }
@@ -543,6 +547,7 @@ private:
     WVObservationOccurrenceIdentity firstIdentity_;
     WVObservationBatch batch_;
     std::array<std::size_t, 2> attempts_{};
+    std::array<std::size_t, 2> committedOffsets_{};
     std::size_t identityCount_ = 0;
     std::size_t batchBuildCount_ = 0;
     std::size_t successfulRouteCount_ = 0;
@@ -711,6 +716,9 @@ void testOutputDriverFailureRetry() {
                 status.message);
     require(sink.attempts() == std::array<std::size_t, 2>{1, 1},
             "later memory-route failure attempted the wrong destinations");
+    require(sink.committedOffsets() ==
+                std::array<std::size_t, 2>{1, 0},
+            "failed route advanced its committed destination offset");
     const auto rightHandSidesAtFailure =
         system.rightHandSideEvaluationCount();
     const auto acceptedStepsAtFailure =
@@ -727,6 +735,8 @@ void testOutputDriverFailureRetry() {
     require(state.view.waveVortex.t == 1570.0,
             "successful memory-route retry did not commit the accepted state");
     require(sink.attempts() == std::array<std::size_t, 2>{1, 2} &&
+                sink.committedOffsets() ==
+                    std::array<std::size_t, 2>{1, 1} &&
                 sink.successfulRouteCount() == 2,
             "retry repeated a committed route or skipped the failed route");
     require(sink.identityCount() == 3 &&
