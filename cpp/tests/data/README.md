@@ -12,3 +12,17 @@ CTest reads the same fixture as `UnitTests/TestPortableCoreParity.m`. The fixtur
 covers all resolved mission configurations, representative circular and
 nodal-precession positions, projection and inverse-projection cases, repeating
 and geodetic windows, pass boundaries, and trigger times.
+
+`wavevortex_matlab_reference.csv` records the paired-extension field and batch
+oracle. It was generated with MATLAB R2026a by restoring WaveVortexModel's
+committed `root-hydrostatic.nc` portable-runtime fixture, centering a 15 km by
+12 km projection window on the AltiKa geodetic ground track at 435 s, and
+setting the restored transform time to the pass trigger, and calling
+`variableAtPositionWithName` for `ssh`, `ssu`, and `ssv`. The `meta`
+row stores the evaluation time, domain lengths, projection latitude and
+longitude, and one-second cadence. Each sample row stores MATLAB's pass
+geometry in `x` and `y`. The `field_x` and `field_y` columns record the exact
+portable projected coordinates supplied back to MATLAB for the field oracle;
+this separates the established cross-runtime orbit/projection tolerance from
+the field-service comparison instead of amplifying nanometre-scale coordinate
+roundoff into an apparent field error.

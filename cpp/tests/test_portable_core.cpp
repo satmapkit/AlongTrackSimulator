@@ -53,6 +53,23 @@ void checkParity(double actual,
     }
 }
 
+void checkPassParity(const alongtrack::Pass& actual,
+                     const alongtrack::Pass& expected,
+                     const std::string& message) {
+    check(actual.size() == expected.size(), message + " sample count");
+    if (actual.size() != expected.size()) {
+        return;
+    }
+    for (std::size_t index = 0; index < actual.size(); ++index) {
+        checkClose(actual[index].timeSeconds, expected[index].timeSeconds,
+                   0.0, 0.0, message + " sample time");
+        checkParity(actual[index].xMeters, expected[index].xMeters, 1.0e-9,
+                    message + " sample x");
+        checkParity(actual[index].yMeters, expected[index].yMeters, 1.0e-9,
+                    message + " sample y");
+    }
+}
+
 struct ReferenceRow final {
     std::string kind;
     std::string name;
@@ -366,6 +383,145 @@ void testWindowSamplingIsBoundedAndCoversMissionKinds() {
           "long geodetic requests retain only points in the requested working window");
 }
 
+void testLazyMissionPassSource() {
+    const alongtrack::ProjectionWindow window(3000000.0, 3000000.0, 0.0, 0.0);
+    const auto repeatingMission = alongtrack::ResolvedMission::fromCatalog("j3");
+    const alongtrack::MissionPassSource repeating(repeatingMission, window);
+    const auto expectedRepeating = alongtrack::segmentPasses(
+        alongtrack::projectedMissionWindow(repeatingMission, window, 0.0, 30000.0));
+    check(expectedRepeating.size() == 2,
+          "lazy repeating-pass reference contains two passes");
+
+    const auto first = repeating.nextPass(std::nullopt, 0.0, 30000.0);
+    check(first.has_value(), "lazy repeating source discovers its first pass");
+    if (first.has_value()) {
+        check(first->repeatCycleIndex == 0,
+              "base repeating pass has cycle identity zero");
+        check(first->firstSampleIndex == 21650,
+              "base repeating pass has the MATLAB first-sample identity");
+        check(first->sampleCount == 189,
+              "base repeating pass has the MATLAB sample count");
+        checkPassParity(repeating.reconstructPass(*first), expectedRepeating[0],
+                        "lazy first repeating pass");
+        checkClose(repeating.passTriggerTime(*first), 21650.0, 0.0, 0.0,
+                   "lazy first repeating trigger");
+    }
+
+    const auto second = repeating.nextPass(first, 0.0, 30000.0);
+    check(second.has_value(), "lazy repeating source discovers its second pass");
+    if (second.has_value()) {
+        check(second->repeatCycleIndex == 0,
+              "second base repeating pass has cycle identity zero");
+        check(second->firstSampleIndex == 28676,
+              "second repeating pass has the MATLAB first-sample identity");
+        check(second->sampleCount == 270,
+              "second repeating pass has the MATLAB sample count");
+        checkPassParity(repeating.reconstructPass(*second), expectedRepeating[1],
+                        "lazy second repeating pass");
+    }
+    check(!repeating.nextPass(second, 0.0, 30000.0).has_value(),
+          "lazy repeating source reports no third pass in the working window");
+
+    const auto afterPartialFirstPass = repeating.nextPass(
+        std::nullopt, 21660.0, 30000.0);
+    check(afterPartialFirstPass.has_value() &&
+              afterPartialFirstPass->firstSampleIndex == 28676,
+          "repeating discovery does not turn a partial base pass into a new occurrence");
+
+    const double repeatCycle = repeatingMission.repeatCycleSeconds();
+    const auto repeatedFirst = repeating.nextPass(
+        std::nullopt, repeatCycle, repeatCycle + 30000.0);
+    check(repeatedFirst.has_value(), "lazy repeating source discovers the next cycle");
+    if (first.has_value() && repeatedFirst.has_value()) {
+        check(repeatedFirst->repeatCycleIndex == 1,
+              "repeated pass carries its cycle identity");
+        check(repeatedFirst->firstSampleIndex == first->firstSampleIndex &&
+                  repeatedFirst->sampleCount == first->sampleCount,
+              "repeated pass reuses the complete base-cycle geometry key");
+        const auto baseGeometry = repeating.reconstructPass(*first);
+        const auto repeatedGeometry = repeating.reconstructPass(*repeatedFirst);
+        check(baseGeometry.size() == repeatedGeometry.size(),
+              "repeated pass reuses the base sample extent");
+        for (std::size_t index = 0;
+             index < std::min(baseGeometry.size(), repeatedGeometry.size()); ++index) {
+            checkClose(repeatedGeometry[index].xMeters,
+                       baseGeometry[index].xMeters, 0.0, 0.0,
+                       "repeated pass x is exactly base-cycle geometry");
+            checkClose(repeatedGeometry[index].yMeters,
+                       baseGeometry[index].yMeters, 0.0, 0.0,
+                       "repeated pass y is exactly base-cycle geometry");
+            checkClose(repeatedGeometry[index].timeSeconds,
+                       baseGeometry[index].timeSeconds + repeatCycle, 0.0, 0.0,
+                       "repeated pass applies the exact cycle time offset");
+        }
+    }
+
+    const auto geodeticMission = alongtrack::ResolvedMission::fromCatalog("alg");
+    const alongtrack::MissionPassSource geodetic(geodeticMission, window);
+    const auto expectedGeodetic = alongtrack::segmentPasses(
+        alongtrack::projectedMissionWindow(geodeticMission, window, 0.0, 30000.0));
+    check(expectedGeodetic.size() == 1,
+          "lazy geodetic reference contains one pass");
+    const auto geodeticPass = geodetic.nextPass(std::nullopt, 0.0, 30000.0);
+    check(geodeticPass.has_value(), "lazy geodetic source discovers its pass");
+    if (geodeticPass.has_value()) {
+        check(geodeticPass->repeatCycleIndex == 0,
+              "geodetic pass has no repeat-cycle identity");
+        check(geodeticPass->firstSampleIndex == 1510 &&
+                  geodeticPass->sampleCount == 542,
+              "geodetic pass descriptor matches MATLAB");
+        checkPassParity(geodetic.reconstructPass(*geodeticPass),
+                        expectedGeodetic[0], "lazy geodetic pass");
+    }
+    check(!geodetic.nextPass(geodeticPass, 0.0, 30000.0).has_value(),
+          "lazy geodetic source reports no second pass in the working window");
+
+    const auto splitBoundaryPass = geodetic.nextPass(
+        std::nullopt, 0.0, 1600.0);
+    check(splitBoundaryPass.has_value(),
+          "geodetic pass is discovered when its trigger precedes a segment boundary");
+    if (splitBoundaryPass.has_value() && geodeticPass.has_value()) {
+        check(splitBoundaryPass->firstSampleIndex ==
+                  geodeticPass->firstSampleIndex &&
+                  splitBoundaryPass->sampleCount == geodeticPass->sampleCount,
+              "pass geometry is completed beyond a segment boundary");
+        checkPassParity(geodetic.reconstructPass(*splitBoundaryPass),
+                        geodetic.reconstructPass(*geodeticPass),
+                        "segmented geodetic pass");
+        check(!geodetic.nextPass(
+                   splitBoundaryPass, 1600.0, 30000.0).has_value(),
+              "continuation cursor does not duplicate a boundary-spanning pass");
+    }
+
+    const alongtrack::ProjectionWindow emptyWindow(1000.0, 1000.0, 0.0, 0.0);
+    const alongtrack::MissionPassSource emptyGeodetic(geodeticMission, emptyWindow, 60.0);
+    const auto retainedBytes = emptyGeodetic.persistentBytes();
+    check(!emptyGeodetic.nextPass(
+               std::nullopt, 0.0, 180.0 * 86400.0).has_value(),
+          "lazy long-window discovery retains no empty geodetic trajectory");
+    check(emptyGeodetic.persistentBytes() == retainedBytes,
+          "pass-source retained storage is independent of requested duration");
+    check(sizeof(alongtrack::MissionPassDescriptor) ==
+              3 * sizeof(std::int64_t),
+          "pass descriptor is exactly three compact integer fields");
+    check(repeating.persistentBytes() < 512,
+          "pass source owns bounded numeric configuration only");
+    check(!std::is_copy_assignable_v<alongtrack::MissionPassSource>,
+          "pass source cannot be mutated by assignment");
+
+    const alongtrack::MissionPassDescriptor zeroLength{0, 0, 0};
+    check(!geodetic.isStructurallyValid(zeroLength),
+          "zero-length pass descriptors are rejected");
+    bool invalidDescriptorRejected = false;
+    try {
+        (void)geodetic.reconstructPass(zeroLength);
+    } catch (const std::invalid_argument&) {
+        invalidDescriptorRejected = true;
+    }
+    check(invalidDescriptorRejected,
+          "invalid pass geometry is rejected before allocation");
+}
+
 void testValidation() {
     bool unknownRejected = false;
     try {
@@ -394,6 +550,7 @@ int main() {
     testPassSegmentationAndEmptyWindows();
     testProjectionRoundTripAndLongitudeWrapping();
     testWindowSamplingIsBoundedAndCoversMissionKinds();
+    testLazyMissionPassSource();
     testValidation();
     if (failures != 0) {
         std::cerr << failures << " portable-core checks failed\n";

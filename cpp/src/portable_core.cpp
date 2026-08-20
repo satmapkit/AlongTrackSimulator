@@ -163,6 +163,98 @@ struct GeographicBounds final {
     return bounds;
 }
 
+class ProjectionWindowSampleEvaluator final {
+public:
+    explicit ProjectionWindowSampleEvaluator(const ProjectionWindow& window)
+        : window_(window),
+          projection_(window.centerLongitudeDegrees()),
+          projectedCenter_(projection_.forward(
+              {window.centerLatitudeDegrees(), window.centerLongitudeDegrees()})),
+          geographicBounds_(geographicBoundsForWindow(window, projection_, projectedCenter_)),
+          halfWidth_(window.widthMeters() / 2.0),
+          halfHeight_(window.heightMeters() / 2.0) {}
+
+    [[nodiscard]] std::optional<ProjectedPoint> project(GeographicPoint point) const noexcept {
+        if (!geographicBounds_.contains(point)) {
+            return std::nullopt;
+        }
+        const ProjectedPoint projected = projection_.forward(point);
+        double x = projected.xMeters - projectedCenter_.xMeters;
+        double y = projected.yMeters - projectedCenter_.yMeters;
+        if (x < -halfWidth_ || x > halfWidth_ || y < -halfHeight_ || y > halfHeight_) {
+            return std::nullopt;
+        }
+        if (window_.origin() == WindowOrigin::lowerLeft) {
+            x += halfWidth_;
+            y += halfHeight_;
+        }
+        return ProjectedPoint{x, y};
+    }
+
+private:
+    const ProjectionWindow& window_;
+    const TransverseMercator projection_;
+    const ProjectedPoint projectedCenter_;
+    const GeographicBounds geographicBounds_;
+    const double halfWidth_;
+    const double halfHeight_;
+};
+
+[[nodiscard]] std::int64_t checkedCeilingIndex(double timeSeconds,
+                                                double sampleIntervalSeconds) {
+    const long double quotient = static_cast<long double>(timeSeconds) /
+                                 static_cast<long double>(sampleIntervalSeconds);
+    const long double rounded = std::ceil(quotient);
+    if (rounded < static_cast<long double>(std::numeric_limits<std::int64_t>::min()) ||
+        rounded > static_cast<long double>(std::numeric_limits<std::int64_t>::max())) {
+        throw std::overflow_error("sample-lattice index exceeds int64 capacity");
+    }
+    return static_cast<std::int64_t>(rounded);
+}
+
+[[nodiscard]] std::int64_t checkedFloorIndex(double timeSeconds,
+                                              double sampleIntervalSeconds) {
+    const long double quotient = static_cast<long double>(timeSeconds) /
+                                 static_cast<long double>(sampleIntervalSeconds);
+    const long double rounded = std::floor(quotient);
+    if (rounded < static_cast<long double>(std::numeric_limits<std::int64_t>::min()) ||
+        rounded > static_cast<long double>(std::numeric_limits<std::int64_t>::max())) {
+        throw std::overflow_error("sample-lattice index exceeds int64 capacity");
+    }
+    return static_cast<std::int64_t>(rounded);
+}
+
+[[nodiscard]] bool descriptorEnd(const MissionPassDescriptor& descriptor,
+                                 std::int64_t& exclusiveEnd) noexcept {
+    if (descriptor.sampleCount <= 0 ||
+        descriptor.firstSampleIndex >
+            std::numeric_limits<std::int64_t>::max() - descriptor.sampleCount) {
+        return false;
+    }
+    exclusiveEnd = descriptor.firstSampleIndex + descriptor.sampleCount;
+    return true;
+}
+
+[[nodiscard]] std::int64_t checkedIncrement(std::int64_t value,
+                                            const char* message) {
+    if (value == std::numeric_limits<std::int64_t>::max()) {
+        throw std::overflow_error(message);
+    }
+    return value + 1;
+}
+
+[[nodiscard]] std::int64_t resolvedMaximumPassSampleCount(
+    const ResolvedMission& mission,
+    double sampleIntervalSeconds) {
+    if (!isFinitePositive(sampleIntervalSeconds)) {
+        throw std::invalid_argument("pass-source sample interval must be finite and positive");
+    }
+    const auto nodalIntervalCount = checkedCeilingIndex(
+        mission.nodalPeriodSeconds(), sampleIntervalSeconds);
+    return checkedIncrement(nodalIntervalCount,
+                            "maximum pass sample count exceeds int64 capacity");
+}
+
 } // namespace
 
 OrbitConfiguration::OrbitConfiguration(double semiMajorAxisKm,
@@ -548,6 +640,304 @@ std::vector<double> passTriggerTimes(const std::vector<Pass>& passes) {
         times.push_back(pass.front().timeSeconds);
     }
     return times;
+}
+
+MissionPassSource::MissionPassSource(const ResolvedMission& mission,
+                                     const ProjectionWindow& window,
+                                     double sampleIntervalSeconds)
+    : mission_(mission),
+      window_(window),
+      sampleIntervalSeconds_(sampleIntervalSeconds),
+      maximumPassSampleCount_(resolvedMaximumPassSampleCount(
+          mission_, sampleIntervalSeconds_)) {
+    if (mission_.isRepeating()) {
+        (void)checkedFloorIndex(mission_.repeatCycleSeconds(), sampleIntervalSeconds_);
+    }
+}
+
+const ResolvedMission& MissionPassSource::mission() const noexcept { return mission_; }
+const ProjectionWindow& MissionPassSource::window() const noexcept { return window_; }
+double MissionPassSource::sampleIntervalSeconds() const noexcept {
+    return sampleIntervalSeconds_;
+}
+
+bool MissionPassSource::isStructurallyValid(
+    const MissionPassDescriptor& descriptor) const noexcept {
+    std::int64_t exclusiveEnd = 0;
+    if (!descriptorEnd(descriptor, exclusiveEnd)) {
+        return false;
+    }
+    if (descriptor.sampleCount > maximumPassSampleCount_) {
+        return false;
+    }
+    if (!mission_.isRepeating()) {
+        return descriptor.repeatCycleIndex == 0;
+    }
+    if (descriptor.firstSampleIndex < 0) {
+        return false;
+    }
+    const long double maximumIndex = std::floor(
+        static_cast<long double>(mission_.repeatCycleSeconds()) /
+        static_cast<long double>(sampleIntervalSeconds_));
+    return static_cast<long double>(exclusiveEnd - 1) <= maximumIndex;
+}
+
+namespace {
+
+[[nodiscard]] double passLatticeTime(std::int64_t sampleIndex,
+                                     double sampleIntervalSeconds) {
+    const double time = static_cast<double>(sampleIndex) * sampleIntervalSeconds;
+    if (!std::isfinite(time)) {
+        throw std::overflow_error("pass sample time is not finite");
+    }
+    return time;
+}
+
+[[nodiscard]] double repeatCycleOffset(const MissionPassSource& source,
+                                       std::int64_t cycleIndex) {
+    if (!source.mission().isRepeating()) {
+        return 0.0;
+    }
+    const double offset = static_cast<double>(cycleIndex) *
+                          source.mission().repeatCycleSeconds();
+    if (!std::isfinite(offset)) {
+        throw std::overflow_error("pass repeat-cycle offset is not finite");
+    }
+    return offset;
+}
+
+[[nodiscard]] double scheduledPassSampleTime(const MissionPassSource& source,
+                                             std::int64_t cycleIndex,
+                                             std::int64_t sampleIndex) {
+    const double baseTime = passLatticeTime(sampleIndex,
+                                            source.sampleIntervalSeconds());
+    const double scheduledTime = baseTime + repeatCycleOffset(source, cycleIndex);
+    if (!std::isfinite(scheduledTime)) {
+        throw std::overflow_error("scheduled pass sample time is not finite");
+    }
+    return scheduledTime;
+}
+
+[[nodiscard]] std::optional<TimedProjectedPoint> projectedPassSample(
+    const MissionPassSource& source,
+    const ProjectionWindowSampleEvaluator& evaluator,
+    std::int64_t cycleIndex,
+    std::int64_t sampleIndex) {
+    const double scheduledTime = scheduledPassSampleTime(source, cycleIndex, sampleIndex);
+    const double orbitTime = source.mission().isRepeating()
+                                 ? passLatticeTime(sampleIndex,
+                                                   source.sampleIntervalSeconds())
+                                 : scheduledTime;
+    const auto projected = evaluator.project(
+        missionGroundTrackPoint(source.mission(), orbitTime));
+    if (!projected.has_value()) {
+        return std::nullopt;
+    }
+    return TimedProjectedPoint{
+        projected->xMeters, projected->yMeters, scheduledTime};
+}
+
+} // namespace
+
+double MissionPassSource::passTriggerTime(
+    const MissionPassDescriptor& descriptor) const {
+    if (!isStructurallyValid(descriptor)) {
+        throw std::invalid_argument("invalid mission-pass descriptor");
+    }
+    return scheduledPassSampleTime(
+        *this, descriptor.repeatCycleIndex, descriptor.firstSampleIndex);
+}
+
+std::optional<MissionPassDescriptor> MissionPassSource::nextPass(
+    const std::optional<MissionPassDescriptor>& committedPass,
+    double lowerBoundSeconds,
+    double upperBoundSeconds) const {
+    if (!std::isfinite(lowerBoundSeconds) || !std::isfinite(upperBoundSeconds) ||
+        upperBoundSeconds < lowerBoundSeconds) {
+        throw std::invalid_argument("pass discovery window must be finite and ordered");
+    }
+    if (committedPass.has_value() && !isStructurallyValid(*committedPass)) {
+        throw std::invalid_argument("invalid committed mission-pass descriptor");
+    }
+
+    const ProjectionWindowSampleEvaluator evaluator(window_);
+    if (!mission_.isRepeating()) {
+        const std::int64_t finalTriggerIndex =
+            checkedFloorIndex(upperBoundSeconds, sampleIntervalSeconds_);
+        std::int64_t sampleIndex =
+            checkedCeilingIndex(lowerBoundSeconds, sampleIntervalSeconds_);
+        bool skipCommittedPassRemainder = false;
+        if (committedPass.has_value()) {
+            std::int64_t committedEnd = 0;
+            (void)descriptorEnd(*committedPass, committedEnd);
+            if (committedEnd > sampleIndex) {
+                sampleIndex = committedEnd;
+            }
+            if (committedPass->sampleCount < maximumPassSampleCount_ &&
+                sampleIndex <= finalTriggerIndex) {
+                skipCommittedPassRemainder = projectedPassSample(
+                    *this, evaluator, 0, sampleIndex).has_value();
+            }
+        }
+        if (sampleIndex > finalTriggerIndex) {
+            return std::nullopt;
+        }
+
+        while (sampleIndex <= finalTriggerIndex) {
+            const bool inside = projectedPassSample(
+                *this, evaluator, 0, sampleIndex).has_value();
+            if (skipCommittedPassRemainder) {
+                if (!inside) {
+                    skipCommittedPassRemainder = false;
+                }
+                sampleIndex = checkedIncrement(
+                    sampleIndex, "non-repeating pass sample index overflowed");
+                continue;
+            }
+            if (!inside) {
+                sampleIndex = checkedIncrement(
+                    sampleIndex, "non-repeating pass sample index overflowed");
+                continue;
+            }
+
+            const std::int64_t firstSampleIndex = sampleIndex;
+            std::int64_t sampleCount = 0;
+            while (sampleCount < maximumPassSampleCount_ &&
+                   projectedPassSample(*this, evaluator, 0, sampleIndex).has_value()) {
+                sampleCount = checkedIncrement(
+                    sampleCount, "non-repeating pass sample count overflowed");
+                sampleIndex = checkedIncrement(
+                    sampleIndex, "non-repeating pass sample index overflowed");
+            }
+            return MissionPassDescriptor{0, firstSampleIndex, sampleCount};
+        }
+        return std::nullopt;
+    }
+
+    const double repeatCycleSeconds = mission_.repeatCycleSeconds();
+    const std::int64_t finalBaseSampleIndex =
+        checkedFloorIndex(repeatCycleSeconds, sampleIntervalSeconds_);
+    std::int64_t cycleIndex = checkedFloorIndex(lowerBoundSeconds,
+                                                repeatCycleSeconds);
+    const double initialCycleOffset = repeatCycleOffset(*this, cycleIndex);
+    std::int64_t sampleIndex = checkedCeilingIndex(
+        lowerBoundSeconds - initialCycleOffset, sampleIntervalSeconds_);
+    bool skipPartialPass = sampleIndex > 0;
+
+    if (committedPass.has_value()) {
+        std::int64_t committedEnd = 0;
+        (void)descriptorEnd(*committedPass, committedEnd);
+        const auto committedCycle = committedPass->repeatCycleIndex;
+        if (committedCycle > cycleIndex ||
+            (committedCycle == cycleIndex && committedEnd > sampleIndex)) {
+            cycleIndex = committedCycle;
+            sampleIndex = committedEnd;
+            skipPartialPass =
+                committedPass->sampleCount < maximumPassSampleCount_ &&
+                sampleIndex <= finalBaseSampleIndex &&
+                projectedPassSample(*this, evaluator, cycleIndex,
+                                    sampleIndex).has_value();
+        }
+    }
+
+    while (sampleIndex > finalBaseSampleIndex) {
+        cycleIndex = checkedIncrement(cycleIndex,
+                                      "repeat-cycle index overflowed");
+        sampleIndex = 0;
+        skipPartialPass = false;
+    }
+    if (skipPartialPass) {
+        skipPartialPass = projectedPassSample(
+            *this, evaluator, cycleIndex, sampleIndex - 1).has_value();
+    }
+
+    for (;;) {
+        const bool scanningCompleteBaseCycle = sampleIndex == 0 && !skipPartialPass;
+        while (sampleIndex <= finalBaseSampleIndex) {
+            const double scheduledTime = scheduledPassSampleTime(
+                *this, cycleIndex, sampleIndex);
+            if (scheduledTime < lowerBoundSeconds) {
+                sampleIndex = checkedIncrement(
+                    sampleIndex, "repeating pass sample index overflowed");
+                continue;
+            }
+            if (scheduledTime > upperBoundSeconds) {
+                return std::nullopt;
+            }
+
+            const bool inside = projectedPassSample(
+                *this, evaluator, cycleIndex, sampleIndex).has_value();
+            if (skipPartialPass) {
+                if (!inside) {
+                    skipPartialPass = false;
+                }
+                sampleIndex = checkedIncrement(
+                    sampleIndex, "repeating pass sample index overflowed");
+                continue;
+            }
+            if (!inside) {
+                sampleIndex = checkedIncrement(
+                    sampleIndex, "repeating pass sample index overflowed");
+                continue;
+            }
+
+            const std::int64_t firstSampleIndex = sampleIndex;
+            std::int64_t sampleCount = 0;
+            while (sampleIndex <= finalBaseSampleIndex &&
+                   sampleCount < maximumPassSampleCount_ &&
+                   projectedPassSample(*this, evaluator, cycleIndex,
+                                       sampleIndex).has_value()) {
+                sampleCount = checkedIncrement(
+                    sampleCount, "repeating pass sample count overflowed");
+                sampleIndex = checkedIncrement(
+                    sampleIndex, "repeating pass sample index overflowed");
+            }
+            return MissionPassDescriptor{
+                cycleIndex, firstSampleIndex, sampleCount};
+        }
+
+        if (scanningCompleteBaseCycle) {
+            return std::nullopt;
+        }
+        cycleIndex = checkedIncrement(cycleIndex,
+                                      "repeat-cycle index overflowed");
+        sampleIndex = 0;
+        skipPartialPass = false;
+        if (scheduledPassSampleTime(*this, cycleIndex, sampleIndex) >
+            upperBoundSeconds) {
+            return std::nullopt;
+        }
+    }
+}
+
+Pass MissionPassSource::reconstructPass(
+    const MissionPassDescriptor& descriptor) const {
+    if (!isStructurallyValid(descriptor)) {
+        throw std::invalid_argument("invalid mission-pass descriptor");
+    }
+    if (static_cast<std::uint64_t>(descriptor.sampleCount) >
+        static_cast<std::uint64_t>(std::numeric_limits<std::size_t>::max())) {
+        throw std::overflow_error("mission-pass sample count exceeds size_t capacity");
+    }
+
+    const ProjectionWindowSampleEvaluator evaluator(window_);
+    Pass pass;
+    pass.reserve(static_cast<std::size_t>(descriptor.sampleCount));
+    for (std::int64_t offset = 0; offset < descriptor.sampleCount; ++offset) {
+        const std::int64_t sampleIndex = descriptor.firstSampleIndex + offset;
+        const auto point = projectedPassSample(
+            *this, evaluator, descriptor.repeatCycleIndex, sampleIndex);
+        if (!point.has_value()) {
+            throw std::invalid_argument(
+                "mission-pass descriptor contains an out-of-window sample");
+        }
+        pass.push_back(*point);
+    }
+    return pass;
+}
+
+std::size_t MissionPassSource::persistentBytes() const noexcept {
+    return sizeof(*this) + mission_.key().capacity();
 }
 
 } // namespace alongtrack
