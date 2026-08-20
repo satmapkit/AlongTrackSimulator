@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -89,6 +90,17 @@ struct TimedProjectedPoint final {
 };
 
 using Pass = std::vector<TimedProjectedPoint>;
+
+// Compact identity and geometry extent for one projected mission pass. Sample
+// indices refer to the source cadence lattice. For repeating missions they are
+// indices in the immutable base repeat cycle and repeatCycleIndex supplies the
+// exact time offset. For non-repeating missions firstSampleIndex is absolute and
+// repeatCycleIndex is zero.
+struct MissionPassDescriptor final {
+    std::int64_t repeatCycleIndex = 0;
+    std::int64_t firstSampleIndex = 0;
+    std::int64_t sampleCount = 0;
+};
 
 [[nodiscard]] double wrapLongitudeDegrees(double longitudeDegrees) noexcept;
 [[nodiscard]] double orbitalPeriodSeconds(double semiMajorAxisKm) noexcept;
@@ -183,5 +195,48 @@ private:
     double maximumContinuousGapSeconds = 1.0);
 
 [[nodiscard]] std::vector<double> passTriggerTimes(const std::vector<Pass>& passes);
+
+// Immutable, bounded pass source for schedule and observation adapters. The
+// source owns resolved numeric configuration only. nextPass() discovers one
+// pass without retaining trajectory samples, while reconstructPass() allocates
+// only the requested pass geometry.
+class MissionPassSource final {
+public:
+    MissionPassSource(const ResolvedMission& mission,
+                      const ProjectionWindow& window,
+                      double sampleIntervalSeconds = 1.0);
+
+    MissionPassSource(const MissionPassSource&) = default;
+    MissionPassSource& operator=(const MissionPassSource&) = delete;
+
+    [[nodiscard]] const ResolvedMission& mission() const noexcept;
+    [[nodiscard]] const ProjectionWindow& window() const noexcept;
+    [[nodiscard]] double sampleIntervalSeconds() const noexcept;
+
+    // The optional committed pass is the complete continuation cursor. Passing
+    // nullopt starts at lowerBoundSeconds. The returned pass trigger lies in the
+    // inclusive requested window. Once discovered, its geometry continues to
+    // the first out-of-window sample (or the immutable repeat-cycle boundary)
+    // so segmented discovery is invariant. A deterministic one-nodal-period
+    // cap bounds a domain that never exits.
+    [[nodiscard]] std::optional<MissionPassDescriptor> nextPass(
+        const std::optional<MissionPassDescriptor>& committedPass,
+        double lowerBoundSeconds,
+        double upperBoundSeconds) const;
+
+    [[nodiscard]] bool isStructurallyValid(
+        const MissionPassDescriptor& descriptor) const noexcept;
+    [[nodiscard]] double passTriggerTime(
+        const MissionPassDescriptor& descriptor) const;
+    [[nodiscard]] Pass reconstructPass(
+        const MissionPassDescriptor& descriptor) const;
+    [[nodiscard]] std::size_t persistentBytes() const noexcept;
+
+private:
+    const ResolvedMission mission_;
+    const ProjectionWindow window_;
+    const double sampleIntervalSeconds_;
+    const std::int64_t maximumPassSampleCount_;
+};
 
 } // namespace alongtrack
