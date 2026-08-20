@@ -8,16 +8,16 @@ permalink: /portable-wave-vortex-runner
 
 # Portable WaveVortex runner
 
-`alongtrack-wave-vortex-run` is the supported MATLAB-independent executor for portable WaveVortexModel bundles that contain `WVAlongTrackSchedule` and `WVAlongTrackObservingSystem` records. MATLAB remains the scientific and authoring authority. The executable is a source-built client of WaveVortexModel's provisional portable source API, not a second scientific configuration system or a stable binary plug-in interface.
+`alongtrack-wave-vortex-run` is the supported MATLAB-independent executor for portable WaveVortexModel bundles that contain `WVAlongTrackSchedule` and `WVAlongTrackObservingSystem` records. MATLAB remains the scientific and authoring authority. The executable is a source-built client of `wave-vortex-portable-source-api-v1`, not a second scientific configuration system or a stable binary plug-in interface. Compatibility is source-level: select the WaveVortexModel revision explicitly and recompile the application and extension together.
 
 ## Select the WaveVortexModel source dependency
 
-The source checkout can live anywhere. Pass its location explicitly through `ALONGTRACK_WAVEVORTEX_SOURCE_DIR`; the build does not search for a machine-specific sibling directory. AlongTrackSimulator CI pins WaveVortexModel commit `84dc1b53093650fdbc9be62b637cf298c46a95d3` from `feature/matlab-aligned-portable-cpp-architecture`. A later descendant is a deliberate dependency update and must pass the same compatibility, numerical, persistence, and performance gates before it becomes the documented selection.
+The source checkout can live anywhere. Pass its location explicitly through `ALONGTRACK_WAVEVORTEX_SOURCE_DIR`; the build does not search for a machine-specific sibling directory. AlongTrackSimulator CI pins the source API v1 candidate at WaveVortexModel commit `1606dc7654c89dda402a6f7ae43fd93d0c7e4235`. A later descendant is a deliberate dependency update and must pass the same compatibility, numerical, persistence, and performance gates before it becomes the documented selection.
 
 ```sh
 git clone https://github.com/satmapkit/AlongTrackSimulator.git AlongTrackSimulator
 git clone https://github.com/JeffreyEarly/wave-vortex-model.git WaveVortexModel
-git -C WaveVortexModel checkout 84dc1b53093650fdbc9be62b637cf298c46a95d3
+git -C WaveVortexModel checkout 1606dc7654c89dda402a6f7ae43fd93d0c7e4235
 
 cmake -S AlongTrackSimulator -B build/alongtrack-release \
   -DCMAKE_BUILD_TYPE=Release \
@@ -28,7 +28,7 @@ cmake --build build/alongtrack-release --parallel --target alongtrack-wave-vorte
 ctest --test-dir build/alongtrack-release --output-on-failure
 ```
 
-The reference build requires CMake 3.20, a C++17 compiler, and NetCDF C. `ALONGTRACK_WARNINGS_AS_ERRORS=ON` enables the warning policy used in CI. The source-linked runner is qualified on Ubuntu with GCC and Clang and on macOS with AppleClang, matching the supported build lanes of the pinned WaveVortexModel source dependency. The ordinary extension-disabled `AlongTrack::PortableCore` build remains independent of WaveVortexModel and NetCDF and is also qualified on Windows with MSVC. The pinned WaveVortexModel revision does not compile under MSVC, so a Windows source-linked runner is not a supported ATS 4 configuration.
+The reference build requires CMake 3.20, a C++17 compiler, and NetCDF C. `ALONGTRACK_WARNINGS_AS_ERRORS=ON` enables the warning policy used in CI. The source-linked runner is qualified on Ubuntu with GCC and Clang and on macOS with AppleClang, matching the supported build lanes of the pinned WaveVortexModel source dependency. The ordinary extension-disabled `AlongTrack::PortableCore` build remains independent of WaveVortexModel and NetCDF and is also qualified on Windows with MSVC. The pinned WaveVortexModel revision does not compile under MSVC, so a Windows source-linked runner is not supported.
 
 ## Catalog composition and runner ownership
 
@@ -47,7 +47,7 @@ if (status) {
 return wavevortex::runtime::runWaveVortex(argc,argv,std::move(catalog));
 ```
 
-This builds WaveVortexModel's forcing, schedule, and observer factories and the AlongTrack pair into one catalog, registers AlongTrack explicitly before inspection, freezes exactly once, and calls the same `runWaveVortex` entry point used by the built-in-only `wave-vortex-run`. There is no static-initialization registration, process-global mutable registry, duplicate argument parser, duplicate integrator, duplicate output graph, dynamic discovery, binary plug-in ABI, or downloaded provider.
+This builds WaveVortexModel's forcing, schedule, and observer factories and the AlongTrack pair into one catalog, registers AlongTrack explicitly before inspection, freezes exactly once, and calls the same `runWaveVortex` entry point used by the built-in-only `wave-vortex-run`. Source API v1 observer registration has exactly five inputs: identity, contract version, factory, optional configuration resolver, and optional output-plan resolver. It exposes no legacy persistence callbacks. There is no static-initialization registration, process-global mutable registry, duplicate argument parser, duplicate integrator, duplicate output graph, dynamic discovery, binary plug-in ABI, or downloaded provider.
 
 ## Author a portable bundle in MATLAB
 

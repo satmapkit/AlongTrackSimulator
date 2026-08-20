@@ -7,6 +7,7 @@ nav_order: 100
 # Version History
 
 ## [Unreleased]
+- Migrated the source-linked WaveVortex extension to `wave-vortex-portable-source-api-v1`, including the five-input observer registration, an exact qualified WaveVortexModel source pin, and the documented source-recompile compatibility policy.
 - Added the source-linked `alongtrack-wave-vortex-run` authoring and execution workflow for the portable AlongTrack schedule and observing-system pair.
 - Added MATLAB portable-bundle authoring, source-only export verification, reproducible WaveVortexModel compatibility CI, and documentation/package checks.
 

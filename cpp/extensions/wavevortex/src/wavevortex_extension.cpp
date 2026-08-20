@@ -1351,7 +1351,7 @@ WVKernelStatus registerAlongTrackExtensions(
     }
     return builder.addObserverFactory(runtime::WVObserverFactoryRegistration(
         observingSystemTypeIdentifier, contractVersion, &makeAlongTrackObserver,
-        &resolveObserverConfiguration, {}, {}, &resolveAlongTrackOutputPlan));
+        &resolveObserverConfiguration, &resolveAlongTrackOutputPlan));
 }
 
 } // namespace alongtrack::wavevortex_extension
