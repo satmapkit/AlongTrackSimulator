@@ -7,7 +7,7 @@ option(ALONGTRACK_WARNINGS_AS_ERRORS
     OFF
 )
 option(ALONGTRACK_ENABLE_SANITIZERS
-    "Enable ASan and UBSan for AlongTrackSimulator-owned C++ targets"
+    "Enable ASan and UBSan for all source-built C++ targets"
     OFF
 )
 option(ALONGTRACK_BUILD_WAVEVORTEX_EXTENSION
@@ -33,25 +33,23 @@ function(alongtrack_enable_warnings target)
     endif()
 endfunction()
 
-function(alongtrack_enable_sanitizers target)
-    if(NOT ALONGTRACK_ENABLE_SANITIZERS)
-        return()
-    endif()
+if(ALONGTRACK_ENABLE_SANITIZERS)
     if(MSVC)
         message(FATAL_ERROR
             "ALONGTRACK_ENABLE_SANITIZERS requires a Clang or GCC toolchain")
     endif()
 
-    # Keep instrumentation on ATS-owned targets. WaveVortexModel is a pinned,
-    # read-only source dependency and has its own sanitizer verification.
-    target_compile_options(${target} PRIVATE
+    # Sanitizer instrumentation must be consistent across source-linked C++
+    # targets that exchange libc++ containers. Directory options established
+    # before target creation cover both ATS and its WVM source dependency.
+    add_compile_options(
         -fsanitize=address,undefined
         -fno-omit-frame-pointer
     )
-    target_link_options(${target} PRIVATE
+    add_link_options(
         -fsanitize=address,undefined
     )
-endfunction()
+endif()
 
 add_library(alongtrack_portable_core
     cpp/src/portable_core.cpp
@@ -69,7 +67,6 @@ set_target_properties(alongtrack_portable_core PROPERTIES
 )
 
 alongtrack_enable_warnings(alongtrack_portable_core)
-alongtrack_enable_sanitizers(alongtrack_portable_core)
 
 include(CTest)
 
@@ -119,7 +116,6 @@ if(BUILD_TESTING)
     target_compile_features(alongtrack_portable_core_tests PRIVATE cxx_std_17)
     set_target_properties(alongtrack_portable_core_tests PROPERTIES CXX_EXTENSIONS OFF)
     alongtrack_enable_warnings(alongtrack_portable_core_tests)
-    alongtrack_enable_sanitizers(alongtrack_portable_core_tests)
     add_test(NAME alongtrack_portable_core COMMAND alongtrack_portable_core_tests)
     add_test(
         NAME alongtrack_portable_core_source_policy

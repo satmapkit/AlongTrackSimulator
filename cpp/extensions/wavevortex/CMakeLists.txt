@@ -27,7 +27,6 @@ set_target_properties(alongtrack_wavevortex_extension PROPERTIES
     POSITION_INDEPENDENT_CODE ON
 )
 alongtrack_enable_warnings(alongtrack_wavevortex_extension)
-alongtrack_enable_sanitizers(alongtrack_wavevortex_extension)
 
 # Production source-linked runner. The executable owns catalog composition;
 # all argument parsing, model inspection, integration, output routing, and
@@ -55,7 +54,6 @@ if(WV_RUNTIME_ENABLE_NATIVE_FFTW)
     )
 endif()
 alongtrack_enable_warnings(alongtrack-wave-vortex-run)
-alongtrack_enable_sanitizers(alongtrack-wave-vortex-run)
 
 if(BUILD_TESTING)
     if(NOT TARGET wave-vortex-run)
@@ -114,8 +112,6 @@ if(BUILD_TESTING)
         PROPERTIES CXX_EXTENSIONS OFF)
     alongtrack_enable_warnings(
         alongtrack_wavevortex_runner_end_to_end_tests)
-    alongtrack_enable_sanitizers(
-        alongtrack_wavevortex_runner_end_to_end_tests)
     add_dependencies(alongtrack_wavevortex_runner_end_to_end_tests
         wave-vortex-run
         alongtrack-wave-vortex-run
@@ -143,7 +139,6 @@ if(BUILD_TESTING)
     set_target_properties(alongtrack_wavevortex_extension_tests PROPERTIES
         CXX_EXTENSIONS OFF)
     alongtrack_enable_warnings(alongtrack_wavevortex_extension_tests)
-    alongtrack_enable_sanitizers(alongtrack_wavevortex_extension_tests)
 
     add_test(NAME alongtrack_wavevortex_extension
         COMMAND alongtrack_wavevortex_extension_tests)
@@ -165,8 +160,6 @@ if(BUILD_TESTING)
     set_target_properties(alongtrack_wavevortex_extension_routing_tests
         PROPERTIES CXX_EXTENSIONS OFF)
     alongtrack_enable_warnings(
-        alongtrack_wavevortex_extension_routing_tests)
-    alongtrack_enable_sanitizers(
         alongtrack_wavevortex_extension_routing_tests)
     add_test(NAME alongtrack_wavevortex_extension_routing
         COMMAND alongtrack_wavevortex_extension_routing_tests)
