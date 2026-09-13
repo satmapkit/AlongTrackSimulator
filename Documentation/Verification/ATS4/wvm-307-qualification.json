@@ -1,0 +1,162 @@
+{
+  "schemaVersion": "ats-wvm-source-linked-qualification-v1",
+  "status": "partial",
+  "alongTrackSimulator": {
+    "commit": "3dd5487ff2ac411e848afdcc520e51e316814c37",
+    "tree": "ae0ec2d93f33ebc02e73674a771f17bd35e79115"
+  },
+  "candidateWaveVortexModel": {
+    "commit": "46b4d787dab69803cc9340dfde67afa0c9c1eddc",
+    "tree": "8ebd038734a0aae166b34f460a1d1b7f6e95b51c",
+    "linkedSourceAggregateSHA256": "44fed3721e6ff42b0dcd93fe504af436983919851162b3ba5e7776927ecbb28f",
+    "linkedSourceManifestFileSHA256": "4a08bd82f61592b029e81500b59f9d9ba36e4f48a6374ecc5f51571c3a09e261",
+    "linkedCppInputEquivalence": {
+      "executedCommit": "914b82fdc20c3030d3d777bc95de74c9199de2ed",
+      "executedTree": "355451b5878454d682fca3e19820a4098ad2d6c6",
+      "receiptId": "source-export-20260913T053759Z-94118",
+      "manifestEntriesCompared": 582,
+      "manifestEntriesMatched": 582,
+      "manifestEntriesMismatched": 0,
+      "byteIdentical": true,
+      "verification": "Every path and SHA-256 entry in the executed receipt's complete linked-source manifest matches both Git commits. Changes after the executed commit are confined to MATLAB, build orchestration, documentation, tests, and source-selection metadata outside that linked C++ manifest."
+    }
+  },
+  "exactCandidateGates": [
+    {
+      "name": "source-only-export",
+      "status": "passed",
+      "executedWaveVortexModel": {
+        "commit": "914b82fdc20c3030d3d777bc95de74c9199de2ed",
+        "tree": "355451b5878454d682fca3e19820a4098ad2d6c6"
+      },
+      "qualifiesFinalPinnedCppInputsByManifest": true,
+      "receiptId": "source-export-20260913T053759Z-94118",
+      "startedUTC": "2026-09-13T05:37:59Z",
+      "completedUTC": "2026-09-13T05:38:38Z",
+      "compiler": {
+        "id": "AppleClang",
+        "version": "21.0.0.21000101"
+      },
+      "tests": {
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "seconds": 10.91
+      },
+      "scope": [
+        "MATLAB ci_release source-only export",
+        "out-of-tree CMake configure and build from the exported tree",
+        "portable core and source-policy tests",
+        "base and extended runner composition, end-to-end, and routing tests"
+      ],
+      "sourceState": {
+        "alongTrackSimulatorCleanBeforeAndAfter": true,
+        "waveVortexLinkedCppCleanBeforeAndAfter": true,
+        "waveVortexWholeTreeClean": false,
+        "waveVortexConcurrentChangesLimitedToMatlabAndDocumentation": true,
+        "waveVortexWorkingDiffSHA256": "3c932f014c678ffe803186628eb81921281dc284b7ee43c2e17c6d7a5d47ade6"
+      },
+      "artifacts": {
+        "receiptSHA256SUMSSHA256": "f7078cdcd63725febd103d56137cf0e93b3c5936ce35a418b9fbdf0da62be1cd",
+        "sourceRecordSHA256": "4dcd5a38c25b76de4f63d70a6e78688b81c75409d4acd0720d88d4f4265f0e21",
+        "exportedBuildLogSHA256": "3b5cd00494c00bb1f371038d26c30655852286741d38d4563ac27179e637e6bb",
+        "matlabExportLogSHA256": "5dfe1180eaa4ce4a53b1a9d9d9b94cac02f7e15de58acb28d3f562f7757b2906",
+        "exportedTreeSHA256": "e048e4f43810990b118600ed7b4d79c71bcec12f28195a618e146c55b4df548c",
+        "baseRunnerSHA256": "c0ed3af098e799aabbe12f991fc5331c57eaaf655fc5687740fb987b7f287cd5",
+        "extendedRunnerSHA256": "e4c83f18ed92024b5eedc27f29cfb392ced112e8592cf74c2fd5ec1655946b18"
+      }
+    }
+  ],
+  "historicalGates": [
+    {
+      "name": "release",
+      "status": "passed",
+      "candidateMatch": false,
+      "alongTrackSimulatorCommit": "511aa6af9c60353b3de4d371dfe0df43159027cf",
+      "waveVortexBaseCommit": "6c7095d725efd5d77cb3c6843db594bcb4394c65",
+      "receiptId": "release-20260913T050227Z-76213",
+      "compiler": "AppleClang 21.0.0.21000101",
+      "tests": {
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "seconds": 11.09
+      },
+      "log": "ats-release.log",
+      "logSHA256": "fb1532caabd34a06cb40e9c084ac8b977e266ce60e1a47e4bd106581cc06b4b"
+    },
+    {
+      "name": "sanitizers-initial",
+      "status": "failed",
+      "candidateMatch": false,
+      "alongTrackSimulatorCommit": "511aa6af9c60353b3de4d371dfe0df43159027cf",
+      "waveVortexBaseCommit": "6c7095d725efd5d77cb3c6843db594bcb4394c65",
+      "receiptId": "sanitizers-20260913T050347Z-78793",
+      "tests": {
+        "passed": 6,
+        "failed": 1,
+        "total": 7,
+        "seconds": 2.36
+      },
+      "compiler": "AppleClang 21.0.0.21000101 with AddressSanitizer and UndefinedBehaviorSanitizer",
+      "failure": "AddressSanitizer container-overflow in alongtrack_wavevortex_runner_end_to_end from inconsistent instrumentation across the source-built graph",
+      "log": "ats-sanitizers.log",
+      "logSHA256": "1ca9b6655b52d3b918e6123858faa44281aed049f0b926618ac7b95b0b62e1b8"
+    },
+    {
+      "name": "sanitizers-consistent-full-graph",
+      "status": "passed",
+      "candidateMatch": false,
+      "alongTrackSimulatorCommit": "3dd5487ff2ac411e848afdcc520e51e316814c37",
+      "waveVortexBaseCommit": "6c7095d725efd5d77cb3c6843db594bcb4394c65",
+      "receiptId": "sanitizers-20260913T050922Z-81854",
+      "compiler": "AppleClang 21.0.0.21000101 with AddressSanitizer and UndefinedBehaviorSanitizer",
+      "tests": {
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "seconds": 16.73
+      },
+      "log": "ats-sanitizers-consistent.log",
+      "logSHA256": "368cba0ab42dce81999dfa4684ec3aaae3ed9d8655bc90fbb046d77752c0eec4"
+    },
+    {
+      "name": "matlab",
+      "status": "passed-in-two-runs",
+      "candidateMatch": false,
+      "alongTrackSimulatorCommit": "3dd5487ff2ac411e848afdcc520e51e316814c37",
+      "waveVortexBaseCommit": "6c7095d725efd5d77cb3c6843db594bcb4394c65",
+      "receiptId": "matlab-20260913T051127Z-84778",
+      "initialRun": {
+        "passed": 12,
+        "incomplete": 5,
+        "log": "ats-matlab.log",
+        "logSHA256": "ca0af50ce5d08f862f9eb9e95fff62459c66358b26033014bfb1e76f0660cc27"
+      },
+      "observerRepairRun": {
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "log": "ats-matlab-observer-repair.log",
+        "logSHA256": "603874e47835d4a315e298afcf7286cbf56d343909cb97e529876917dd0d3109"
+      }
+    }
+  ],
+  "pendingGates": [
+    {
+      "name": "hosted-release-platforms-at-46b4d787",
+      "scope": "Ubuntu GCC, Ubuntu Clang, and macOS AppleClang source-linked Release jobs",
+      "status": "not-run"
+    },
+    {
+      "name": "hosted-sanitizers-at-46b4d787",
+      "scope": "Ubuntu Clang full-graph AddressSanitizer and UndefinedBehaviorSanitizer job",
+      "status": "not-run"
+    },
+    {
+      "name": "hosted-matlab-and-package-at-46b4d787",
+      "scope": "MATLAB R2025b numerical, authoring, persistence, documentation, and source-only package jobs",
+      "status": "not-run"
+    }
+  ]
+}

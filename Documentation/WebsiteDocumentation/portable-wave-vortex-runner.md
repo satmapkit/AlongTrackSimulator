@@ -12,12 +12,12 @@ permalink: /portable-wave-vortex-runner
 
 ## Select the WaveVortexModel source dependency
 
-The source checkout can live anywhere. Pass its location explicitly through `ALONGTRACK_WAVEVORTEX_SOURCE_DIR`; the build does not search for a machine-specific sibling directory. AlongTrackSimulator CI pins the source API v1 candidate at WaveVortexModel commit `1606dc7654c89dda402a6f7ae43fd93d0c7e4235`. A later descendant is a deliberate dependency update and must pass the same compatibility, numerical, persistence, and performance gates before it becomes the documented selection.
+The source checkout can live anywhere. Pass its location explicitly through `ALONGTRACK_WAVEVORTEX_SOURCE_DIR`; the build does not search for a machine-specific sibling directory. AlongTrackSimulator CI selects WaveVortexModel commit `46b4d787dab69803cc9340dfde67afa0c9c1eddc` as the source API v1 candidate. Selection does not itself record a pass: the required workflow run must qualify that exact revision before it becomes the accepted dependency. A later descendant is another deliberate dependency update and must pass the same compatibility, numerical, persistence, and performance gates.
 
 ```sh
 git clone https://github.com/satmapkit/AlongTrackSimulator.git AlongTrackSimulator
 git clone https://github.com/JeffreyEarly/wave-vortex-model.git WaveVortexModel
-git -C WaveVortexModel checkout 1606dc7654c89dda402a6f7ae43fd93d0c7e4235
+git -C WaveVortexModel checkout 46b4d787dab69803cc9340dfde67afa0c9c1eddc
 
 cmake -S AlongTrackSimulator -B build/alongtrack-release \
   -DCMAKE_BUILD_TYPE=Release \
@@ -28,7 +28,7 @@ cmake --build build/alongtrack-release --parallel --target alongtrack-wave-vorte
 ctest --test-dir build/alongtrack-release --output-on-failure
 ```
 
-The reference build requires CMake 3.20, a C++17 compiler, and NetCDF C. `ALONGTRACK_WARNINGS_AS_ERRORS=ON` enables the warning policy used in CI. The source-linked runner is qualified on Ubuntu with GCC and Clang and on macOS with AppleClang, matching the supported build lanes of the pinned WaveVortexModel source dependency. The ordinary extension-disabled `AlongTrack::PortableCore` build remains independent of WaveVortexModel and NetCDF and is also qualified on Windows with MSVC. The pinned WaveVortexModel revision does not compile under MSVC, so a Windows source-linked runner is not supported.
+The reference build requires CMake 3.20, a C++17 compiler, and NetCDF C. `ALONGTRACK_WARNINGS_AS_ERRORS=ON` enables the warning policy used in CI. The source-linked workflow exercises the candidate on Ubuntu with GCC and Clang and on macOS with AppleClang. These are the CI qualification lanes for the pinned WaveVortexModel source dependency; their presence does not assert a pass independently of the required workflow result. The ordinary extension-disabled `AlongTrack::PortableCore` build remains independent of WaveVortexModel and NetCDF and is also qualified on Windows with MSVC. The pinned WaveVortexModel revision does not compile under MSVC, so a Windows source-linked runner is not supported.
 
 ## Catalog composition and runner ownership
 
