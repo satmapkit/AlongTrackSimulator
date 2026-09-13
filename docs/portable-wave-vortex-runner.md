@@ -12,12 +12,12 @@ permalink: /portable-wave-vortex-runner
 
 ## Select the WaveVortexModel source dependency
 
-The source checkout can live anywhere. Pass its location explicitly through `ALONGTRACK_WAVEVORTEX_SOURCE_DIR`; the build does not search for a machine-specific sibling directory. AlongTrackSimulator CI selects WaveVortexModel commit `46b4d787dab69803cc9340dfde67afa0c9c1eddc` as the source API v1 candidate. Selection does not itself record a pass: the required workflow run must qualify that exact revision before it becomes the accepted dependency. A later descendant is another deliberate dependency update and must pass the same compatibility, numerical, persistence, and performance gates.
+The source checkout can live anywhere. Pass its location explicitly through `ALONGTRACK_WAVEVORTEX_SOURCE_DIR`; the build does not search for a machine-specific sibling directory. AlongTrackSimulator CI selects WaveVortexModel commit `ebfd9cc94999e6a4f7a365562bc0c46da6bfbbdb` as the source API v1 candidate. Selection does not itself record a pass: the required workflow run must qualify that exact revision before it becomes the accepted dependency. A later descendant is another deliberate dependency update and must pass the same compatibility, numerical, persistence, and performance gates.
 
 ```sh
 git clone https://github.com/satmapkit/AlongTrackSimulator.git AlongTrackSimulator
 git clone https://github.com/JeffreyEarly/wave-vortex-model.git WaveVortexModel
-git -C WaveVortexModel checkout 46b4d787dab69803cc9340dfde67afa0c9c1eddc
+git -C WaveVortexModel checkout ebfd9cc94999e6a4f7a365562bc0c46da6bfbbdb
 
 cmake -S AlongTrackSimulator -B build/alongtrack-release \
   -DCMAKE_BUILD_TYPE=Release \
